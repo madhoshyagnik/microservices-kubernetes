@@ -1,0 +1,153 @@
+---
+- name: Bootstrap K3s Cluster
+  hosts: k3s
+  become: true
+  gather_facts: true
+
+  vars:
+    packages:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - jq
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade installed packages
+      apt:
+        upgrade: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot if required
+      reboot:
+        reboot_timeout: 600
+        post_reboot_delay: 10
+      when: reboot_required.stat.exists
+
+- name: Install K3s Server
+  hosts: control
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install K3s server
+      shell: |
+        curl -sfL https://get.k3s.io | \
+        INSTALL_K3S_EXEC="server \
+        --node-ip {{ k3s_server_ip }} \
+        --token {{ k3s_token }}" \
+        sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Ensure K3s service is running
+      service:
+        name: k3s
+        state: started
+        enabled: yes
+
+    - name: Wait for Kubernetes API
+      command: kubectl get nodes
+      register: api
+      retries: 20
+      delay: 5
+      until: api.rc == 0
+      changed_when: false
+
+- name: Install K3s Workers
+  hosts: workers
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install K3s agent
+      shell: |
+        curl -sfL https://get.k3s.io | \
+        INSTALL_K3S_EXEC="agent \
+        --server https://{{ k3s_server_ip }}:6443 \
+        --token {{ k3s_token }} \
+        --node-ip {{ ansible_host }}" \
+        sh -s -
+      args:
+        creates: /usr/local/bin/k3s-agent
+
+    - name: Ensure K3s agent service is running
+      service:
+        name: k3s-agent
+        state: started
+        enabled: yes
+
+- name: Configure Cluster
+  hosts: control
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Wait until all nodes have joined
+      command: kubectl get nodes --no-headers
+      register: nodes
+      retries: 20
+      delay: 5
+      until: nodes.stdout_lines | length == 4
+      changed_when: false
+
+    - name: Taint control plane
+      command: >
+        kubectl taint nodes {{ inventory_hostname }}
+        node-role.kubernetes.io/control-plane=true:NoSchedule --overwrite
+      changed_when: false
+
+    - name: Copy kubeconfig for vagrant user
+      copy:
+        remote_src: true
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /home/vagrant/k3s.yaml
+        owner: vagrant
+        group: vagrant
+        mode: "0644"
+
+    - name: Ensure local .kube directory exists
+      delegate_to: localhost
+      become: false
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.kube"
+        state: directory
+        mode: "0755"
+
+    - name: Fetch kubeconfig to localhost
+      fetch:
+        src: /home/vagrant/k3s.yaml
+        dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+        flat: true
+
+    - name: Update kubeconfig server address
+      delegate_to: localhost
+      become: false
+      replace:
+        path: "{{ lookup('env', 'HOME') }}/.kube/config"
+        regexp: '127\.0\.0\.1'
+        replace: "{{ k3s_server_ip }}"
+
+    - name: Verify cluster nodes
+      command: kubectl get nodes -o wide
+      register: cluster_nodes
+      changed_when: false
+
+    - name: Display cluster nodes
+      debug:
+        var: cluster_nodes.stdout_lines
