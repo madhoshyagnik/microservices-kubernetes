@@ -15,6 +15,9 @@ Ensure the following software is installed on the host machine before proceeding
 - SSH key pair (`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`)
 - At least **20 GB of free RAM** on the host (recommended for running larger workloads)
 
+> [!NOTE]
+> The Vagrantfile is configured by default to provision heavy nodes (8 GB RAM / 4 CPUs for control plane, and 4 GB RAM / 2 CPUs for each worker) to support heavy workloads like the OpenTelemetry demo. If you have limited host resources, please adjust the CPU and memory allocations inside the Vagrantfile.
+
 ### Minimal Installation (Debian/Ubuntu)
 
 **VirtualBox:**
