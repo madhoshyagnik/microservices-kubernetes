@@ -1,5 +1,33 @@
 # Provisioning the K3s Cluster Using Ansible
 
+## Key Concepts
+
+| Term | What It Is |
+|------|------------|
+| **K3s** | A lightweight, CNCF-certified Kubernetes distribution by Rancher. It ships as a single binary, replaces etcd with SQLite by default, and bundles essential components (Flannel, CoreDNS, Traefik), making it ideal for edge, IoT, and local development clusters. |
+| **Flannel** | The default Container Network Interface (CNI) plugin bundled with K3s. It creates a virtual overlay network so that every pod in the cluster gets its own IP address and can communicate with pods on other nodes, regardless of the underlying host network. |
+| **CoreDNS** | The cluster DNS server that ships with K3s. It allows pods to discover services by name (e.g., `my-service.default.svc.cluster.local`) instead of hard-coding IP addresses, which is essential for inter-service communication. |
+| **Ansible** | An agentless infrastructure automation tool. Playbooks (written in YAML) define the desired state of your servers, and Ansible connects over SSH to enforce that state — no agent installation required on target nodes. |
+| **Vagrant** | A tool for building and managing reproducible virtual machine environments using a declarative `Vagrantfile`. It provisions local VMs (via VirtualBox, libvirt, etc.) that simulate real multi-node infrastructure on a single workstation. |
+| **Helm** | The package manager for Kubernetes. Helm charts bundle all the manifests, configs, and defaults needed to deploy complex applications (like the OpenTelemetry demo) into a cluster with a single command. |
+| **kubeconfig** | A YAML configuration file that `kubectl` uses to authenticate and connect to a Kubernetes cluster. This playbook automatically retrieves it from the control plane and configures it on the host. |
+| **Control Plane Tainting** | A Kubernetes mechanism to prevent regular workload pods from being scheduled on control plane nodes. This reserves the control plane for cluster management duties only. |
+
+## Why Local K3s Instead of AWS EKS?
+
+| | Local K3s + Vagrant | AWS EKS |
+|---|---|---|
+| **Cost** | Free — runs entirely on your workstation | EKS control plane costs ~$0.10/hr (~$73/mo), plus EC2 instance charges for worker nodes |
+| **Learning depth** | You provision the cluster from scratch — networking, DNS, node joining, tainting — building real operational understanding | Much of the infrastructure is abstracted away; you interact with a managed API |
+| **Iteration speed** | `vagrant up` + `ansible-playbook` gives you a full cluster in minutes, tear it down and rebuild in seconds | Cluster creation takes 10–15 minutes; teardown is slower and may incur costs if forgotten |
+| **Offline development** | Works entirely offline once dependencies are cached | Requires an internet connection and AWS credentials at all times |
+| **Portability** | Runs on any machine with VirtualBox and Vagrant — Linux, macOS, Windows | Tied to an AWS account and region |
+| **Production readiness** | Not designed for production; ideal for learning and experimentation | Production-grade managed Kubernetes with built-in HA, IAM integration, and auto-scaling |
+
+> **Bottom line**: This setup is purpose-built for **learning Kubernetes internals hands-on** — understanding how nodes join a cluster, how CNI networking works, how DNS resolution functions, and how automation tools like Ansible tie it all together. Use EKS (or GKE, AKS) when you need a production-grade managed cluster; use this repo when you want to truly understand what those managed services are doing under the hood.
+
+---
+
 > [!IMPORTANT]
 > **Troubleshooting: Multi-Node Flannel Networking / Cluster DNS Issues**
 > * **Issue**: In Vagrant-based multi-node setups, Flannel CNI defaults to binding on the `eth0` NAT interface, causing all nodes to share the same tunnel IP (`10.0.2.15`). This breaks cross-node pod communication, causing cluster DNS (`coredns`) and services to fail.
