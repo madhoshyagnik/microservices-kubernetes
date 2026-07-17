@@ -70,19 +70,14 @@ The playbook performs the following tasks:
 
 ## Inventory
 
-Update the inventory with your node IP addresses and K3s token.
+The inventory defines the control plane and worker nodes, while shared variables are stored separately in `group_vars/all.yml`.
 
-Example:
+Update `group_vars/all.yml` with your cluster-specific values, and keep the inventory focused on node addresses.
+
+Example inventory:
 
 ```yaml
 all:
-  vars:
-    ansible_user: vagrant
-    ansible_python_interpreter: /usr/bin/python3
-
-    k3s_server_ip: 192.168.56.11
-    k3s_token: "DkPS01xep_{8"
-
   children:
     control:
       hosts:
@@ -104,6 +99,16 @@ all:
       children:
         control:
         workers:
+```
+
+Example `group_vars/all.yml`:
+
+```yaml
+ansible_user: vagrant
+ansible_python_interpreter: /usr/bin/python3
+
+k3s_server_ip: 192.168.56.11
+k3s_token: "DkPS01xep_{8"
 ```
 
 ---

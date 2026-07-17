@@ -1,11 +1,5 @@
+# Inventory for K3s nodes. Shared cluster variables are stored in group_vars/all.yml.
 all:
-  vars:
-    ansible_user: vagrant
-    ansible_python_interpreter: /usr/bin/python3
-
-    k3s_server_ip: 192.168.56.11
-    k3s_token: "DkPS01xep_{8"
-
   children:
     control:
       hosts:
