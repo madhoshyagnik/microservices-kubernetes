@@ -27,7 +27,7 @@ The playbook performs the following tasks:
 ```text
 .
 ├── inventory.yaml
-├── provision-k3s.yaml (Provisions the K3s cluster)
+├── deploy-k3s.yaml (Deploys the K3s cluster)
 ├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
 ├── doc/
 │   └── readme-manual.md (Manual VM setup guide)
@@ -82,13 +82,13 @@ all:
 Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
 
 ```bash
-ansible-playbook -i inventory.yaml provision-k3s.yaml --check
+ansible-playbook -i inventory.yaml deploy-k3s.yaml --check
 ```
 
 To run and apply the playbook:
 
 ```bash
-ansible-playbook -i inventory.yaml provision-k3s.yaml
+ansible-playbook -i inventory.yaml deploy-k3s.yaml
 ```
 
 ---
@@ -172,7 +172,7 @@ Re-running it will:
 - Reapply the control-plane taint if necessary
 
 ```bash
-ansible-playbook -i inventory.yaml provision-k3s.yaml
+ansible-playbook -i inventory.yaml deploy-k3s.yaml
 ```
 
 ---
