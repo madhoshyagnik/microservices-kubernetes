@@ -1,0 +1,9 @@
+---
+- name: Revert K3s Installation
+  hosts: k3s
+  become: true
+  gather_facts: true
+  roles:
+    - role: k3s
+      vars:
+        k3s_action: uninstall

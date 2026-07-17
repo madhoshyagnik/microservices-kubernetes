@@ -15,6 +15,28 @@ Ensure the following software is installed on the host machine before proceeding
 - SSH key pair (`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`)
 - At least **20 GB of free RAM** on the host (recommended for running larger workloads)
 
+### Minimal Installation (Debian/Ubuntu)
+
+**VirtualBox:**
+```bash
+# Download and install official .deb (Debian Bookworm example)
+wget https://download.virtualbox.org/virtualbox/7.0.20/virtualbox-7.0_7.0.20-163906~Debian~bookworm_amd64.deb
+sudo apt update && sudo apt install ./virtualbox-7.0_7.0.20-163906~Debian~bookworm_amd64.deb
+```
+
+**Vagrant:**
+```bash
+# Download and install official .deb
+wget https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1-1_amd64.deb
+sudo apt update && sudo apt install ./vagrant_2.4.1-1_amd64.deb
+```
+
+**Ansible:**
+```bash
+# Install via official Debian repositories
+sudo apt update && sudo apt install -y ansible
+```
+
 ---
 
 ## 1. Create the Virtual Machines
@@ -92,26 +114,32 @@ vagrant up
 
 ## 3. Remove Existing K3s Installation (Optional)
 
-If the VMs were previously used for Kubernetes, remove any existing installation.
+If the VMs were previously used for Kubernetes, you can automatically reset them to a clean state without destroying and recreating the VMs:
 
-### Control Plane
+```bash
+ansible-playbook -i inventory.yaml revert.yaml
+```
 
+### Manual Uninstall (Fallback)
+
+If you prefer to uninstall manually on each node:
+
+**Control Plane:**
 ```bash
 sudo /usr/local/bin/k3s-uninstall.sh
 ```
 
-### Worker Nodes
-
+**Worker Nodes:**
 ```bash
 sudo /usr/local/bin/k3s-agent-uninstall.sh
 ```
 
-(Optional) Remove remaining Kubernetes data:
-
+**Cleanup & Reset:**
 ```bash
-sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet
+sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet /home/vagrant/k3s.yaml
 sudo reboot
 ```
+
 
 ---
 

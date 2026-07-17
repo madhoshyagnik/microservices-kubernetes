@@ -1,0 +1,23 @@
+---
+- name: Install K3s server
+  shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_EXEC="server \
+    --node-ip {{ k3s_server_ip }} \
+    --flannel-iface eth1 \
+    --token {{ k3s_token }}" \
+    sh -
+
+- name: Ensure K3s service is running
+  service:
+    name: k3s
+    state: started
+    enabled: yes
+
+- name: Wait for Kubernetes API
+  command: kubectl get nodes
+  register: api
+  retries: 20
+  delay: 5
+  until: api.rc == 0
+  changed_when: false

@@ -172,26 +172,34 @@ ansible-playbook -i inventory.yaml playbook.yaml
 
 ---
 
-## Uninstalling K3s
+## Uninstalling / Reverting K3s
 
-### Control Plane
+To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the revert playbook on the host:
 
+```bash
+ansible-playbook -i inventory.yaml revert.yaml
+```
+
+### Manual Uninstall (Fallback)
+
+If you prefer to uninstall manually on each node:
+
+**Control Plane:**
 ```bash
 sudo /usr/local/bin/k3s-uninstall.sh
 ```
 
-### Worker Nodes
-
+**Worker Nodes:**
 ```bash
 sudo /usr/local/bin/k3s-agent-uninstall.sh
 ```
 
-(Optional)
-
+**Cleanup & Reset:**
 ```bash
-sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet
+sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet /home/vagrant/k3s.yaml
 sudo reboot
 ```
+
 
 ---
 

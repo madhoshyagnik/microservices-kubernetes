@@ -1,0 +1,25 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade installed packages
+  apt:
+    upgrade: yes
+
+- name: Install required packages
+  apt:
+    name: "{{ packages }}"
+    state: present
+
+- name: Check if reboot is required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Reboot if required
+  reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 10
+  when: reboot_required.stat.exists

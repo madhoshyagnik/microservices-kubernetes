@@ -1,0 +1,35 @@
+---
+- name: Check if K3s agent uninstall script exists
+  stat:
+    path: /usr/local/bin/k3s-agent-uninstall.sh
+  register: agent_uninstall_script
+
+- name: Run K3s agent uninstall script
+  command: /usr/local/bin/k3s-agent-uninstall.sh
+  when:
+    - agent_uninstall_script.stat.exists
+
+- name: Check if K3s server uninstall script exists
+  stat:
+    path: /usr/local/bin/k3s-uninstall.sh
+  register: server_uninstall_script
+
+- name: Run K3s server uninstall script
+  command: /usr/local/bin/k3s-uninstall.sh
+  when:
+    - server_uninstall_script.stat.exists
+
+- name: Clean up remaining rancher/kubelet files and directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/rancher
+    - /var/lib/rancher
+    - /var/lib/kubelet
+    - /home/vagrant/k3s.yaml
+
+- name: Reboot node to clean up network interfaces and iptables rules
+  reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 10
