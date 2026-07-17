@@ -1,3 +1,5 @@
+# NOTE: This Vagrantfile is currently configured to run heavy nodes (suitable for deploying heavy workloads like the OpenTelemetry demo).
+# Adjust RAM and CPU values for each VM below if you have limited host resources.
 Vagrant.configure("2") do |config|
   config.vm.box = "debian/bookworm64"
 
