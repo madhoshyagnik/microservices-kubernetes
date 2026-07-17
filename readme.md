@@ -20,6 +20,9 @@ The playbook performs the following tasks:
 - Retrieves the kubeconfig to the host
 - Configures the local `kubectl`
 
+> [!NOTE]
+> The associated `Vagrantfile` is configured by default to provision heavy nodes (8 GB RAM / 4 CPUs for control plane, and 4 GB RAM / 2 CPUs for each worker) to support heavy workloads like the OpenTelemetry demo. If you have limited host resources, please adjust the CPU and memory allocations inside the Vagrantfile.
+
 ---
 
 ## Directory Structure
