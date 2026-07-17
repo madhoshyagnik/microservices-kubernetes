@@ -1,0 +1,53 @@
+---
+- name: Patch and Reboot Kubernetes Nodes (Rolling)
+  hosts: k3s
+  serial: 1
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Cordon node (disable scheduling)
+      delegate_to: "{{ groups['control'][0] }}"
+      become: false
+      command: kubectl cordon {{ inventory_hostname }}
+      changed_when: true
+      ignore_errors: true
+
+    - name: Drain node (evict pods safely)
+      delegate_to: "{{ groups['control'][0] }}"
+      become: false
+      command: >
+        kubectl drain {{ inventory_hostname }}
+        --ignore-daemonsets
+        --delete-emptydir-data
+        --force
+        --grace-period=60
+      changed_when: true
+      ignore_errors: true
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade installed packages
+      apt:
+        upgrade: yes
+
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot node if required
+      reboot:
+        reboot_timeout: 600
+        post_reboot_delay: 10
+      when: reboot_required.stat.exists
+
+    - name: Uncordon node (enable scheduling)
+      delegate_to: "{{ groups['control'][0] }}"
+      become: false
+      command: kubectl uncordon {{ inventory_hostname }}
+      changed_when: true
+      ignore_errors: true

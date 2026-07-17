@@ -29,6 +29,8 @@ The playbook performs the following tasks:
 ├── inventory.yaml
 ├── deploy-k3s.yaml (Deploys the K3s cluster)
 ├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
+├── check-updates.yaml (Checks for upgradable packages on all nodes)
+├── patch-nodes.yaml (Safe, rolling package upgrade & reboot for nodes)
 ├── doc/
 │   └── readme-manual.md (Manual VM setup guide)
 └── roles/
@@ -173,6 +175,22 @@ Re-running it will:
 
 ```bash
 ansible-playbook -i inventory.yaml deploy-k3s.yaml
+```
+
+## Node Patching & Operations
+
+We provide operational playbooks to inspect and safely patch host OS packages across the cluster nodes.
+
+### 1. Check for Upgrades
+To check which packages are available for upgrade on each node without applying any updates:
+```bash
+ansible-playbook -i inventory.yaml check-updates.yaml
+```
+
+### 2. Rolling Node Patching
+To perform a safe, rolling update across all cluster nodes (upgrades packages and reboots nodes sequentially, cordoning and draining each node beforehand to ensure zero cluster downtime):
+```bash
+ansible-playbook -i inventory.yaml patch-nodes.yaml
 ```
 
 ---

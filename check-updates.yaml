@@ -1,0 +1,26 @@
+---
+- name: Check for Available Updates
+  hosts: k3s
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Check for upgradable packages
+      command: apt list --upgradable
+      register: upgradable_packages
+      changed_when: false
+
+    - name: Display upgradable packages summary
+      vars:
+        packages_list: "{{ upgradable_packages.stdout_lines[1:] | default([]) }}"
+      debug:
+        msg:
+          - "Host: {{ inventory_hostname }}"
+          - "Upgradable packages count: {{ packages_list | length }}"
+          - "Packages:"
+          - "{{ packages_list }}"
