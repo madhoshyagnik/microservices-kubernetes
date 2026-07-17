@@ -74,7 +74,13 @@ all:
 
 ## Run the Playbook
 
-Execute the playbook:
+Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
+
+```bash
+ansible-playbook -i inventory.yaml playbook.yaml --check
+```
+
+To run and apply the playbook:
 
 ```bash
 ansible-playbook -i inventory.yaml playbook.yaml
