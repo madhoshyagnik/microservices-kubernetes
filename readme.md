@@ -32,7 +32,7 @@ The playbook performs the following tasks:
 ├── inventory.yaml
 ├── deploy-k3s.yaml (Deploys the K3s cluster)
 ├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
-├── doc/
+├── Documentation/
 │   └── readme-manual.md (Manual VM setup guide)
 └── roles/
     └── k3s/ (Modular Ansible role for K3s tasks)
