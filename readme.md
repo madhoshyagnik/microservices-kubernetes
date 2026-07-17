@@ -210,9 +210,12 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    helm install my-otel-demo open-telemetry/opentelemetry-demo
    ```
 
-   > **Note**: If the Grafana pod crashloops with `OOMKilled` (Exit Code 137) during plugin extraction, increase its memory limits:
+   > **Note**: If the Grafana pod crashloops with `OOMKilled` (Exit Code 137) during plugin extraction, or fails with permission errors updating bundled plugins (e.g. `elasticsearch`), increase its memory limits and enable the shadowed plugins volume:
    > ```bash
-   > helm upgrade my-otel-demo open-telemetry/opentelemetry-demo --reuse-values --set grafana.resources.limits.memory=512Mi --set grafana.resources.requests.memory=256Mi
+   > helm upgrade my-otel-demo open-telemetry/opentelemetry-demo --reuse-values \
+   >   --set grafana.resources.limits.memory=512Mi \
+   >   --set grafana.resources.requests.memory=256Mi \
+   >   --set grafana.shadowBundledPlugins=true
    > ```
 
 3. **Verify the installation:**
