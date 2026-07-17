@@ -89,13 +89,12 @@ all:
       hosts:
         debian2:
           ansible_host: 192.168.56.12
-
         debian3:
           ansible_host: 192.168.56.13
-
         debian4:
           ansible_host: 192.168.56.14
-
+        debian5:
+          ansible_host: 192.168.56.15
     k3s:
       children:
         control:
