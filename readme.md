@@ -180,6 +180,7 @@ debian1   Ready    control-plane   2m    v1.36.2+k3s1
 debian2   Ready    <none>          1m    v1.36.2+k3s1
 debian3   Ready    <none>          1m    v1.36.2+k3s1
 debian4   Ready    <none>          1m    v1.36.2+k3s1
+debian5   Ready    <none>          1m    v1.36.2+k3s1
 ```
 
 ---

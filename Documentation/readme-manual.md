@@ -47,6 +47,8 @@ sudo apt update && sudo apt install -y ansible
 Create the following `Vagrantfile`:
 
 ```ruby
+# NOTE: This Vagrantfile is currently configured to run heavy nodes (suitable for deploying heavy workloads like the OpenTelemetry demo).
+# Adjust RAM and CPU values for each VM below if you have limited host resources.
 Vagrant.configure("2") do |config|
   config.vm.box = "debian/bookworm64"
 
@@ -56,7 +58,7 @@ Vagrant.configure("2") do |config|
 
     node.vm.provider "virtualbox" do |vb|
       vb.name = "debian1"
-      vb.memory = 8192
+      vb.memory = 6144
       vb.cpus = 4
     end
   end
@@ -93,6 +95,17 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
     end
   end
+
+  config.vm.define "debian5" do |node|
+    node.vm.hostname = "debian5"
+    node.vm.network "private_network", ip: "192.168.56.15"
+
+    node.vm.provider "virtualbox" do |vb|
+      vb.name = "debian5"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+  end
 end
 ```
 
@@ -112,6 +125,7 @@ vagrant up
 | debian2 | 192.168.56.12 | Worker |
 | debian3 | 192.168.56.13 | Worker |
 | debian4 | 192.168.56.14 | Worker |
+| debian5 | 192.168.56.15 | Worker |
 
 ---
 
@@ -169,6 +183,7 @@ Repeat for:
 - debian2
 - debian3
 - debian4
+- debian5
 
 Verify connectivity:
 
@@ -220,7 +235,7 @@ sudo cat /var/lib/rancher/k3s/server/node-token
 
 ## 6. Join Worker Nodes
 
-Repeat the following on **debian2**, **debian3**, and **debian4**.
+Repeat the following on **debian2**, **debian3**, **debian4** and **debian5**.
 
 Install required packages:
 
@@ -246,6 +261,7 @@ Update only the `--node-ip` value:
 
 - debian3 → `192.168.56.13`
 - debian4 → `192.168.56.14`
+- debian5 → `192.168.56.15`
 
 Verify:
 

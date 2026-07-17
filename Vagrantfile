@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
 
     node.vm.provider "virtualbox" do |vb|
       vb.name = "debian1"
-      vb.memory = 8192
+      vb.memory = 6144
       vb.cpus = 4
     end
   end
@@ -42,6 +42,17 @@ Vagrant.configure("2") do |config|
 
     node.vm.provider "virtualbox" do |vb|
       vb.name = "debian4"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+  end
+
+  config.vm.define "debian5" do |node|
+    node.vm.hostname = "debian5"
+    node.vm.network "private_network", ip: "192.168.56.15"
+
+    node.vm.provider "virtualbox" do |vb|
+      vb.name = "debian5"
       vb.memory = 4096
       vb.cpus = 2
     end
