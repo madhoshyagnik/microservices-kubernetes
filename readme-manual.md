@@ -397,6 +397,11 @@ Once the cluster is up and healthy, you can install the OpenTelemetry Demo:
    helm install my-otel-demo open-telemetry/opentelemetry-demo
    ```
 
+   > **Note**: If the Grafana pod crashloops with `OOMKilled` (Exit Code 137) during plugin extraction, increase its memory limits:
+   > ```bash
+   > helm upgrade my-otel-demo open-telemetry/opentelemetry-demo --reuse-values --set grafana.resources.limits.memory=512Mi --set grafana.resources.requests.memory=256Mi
+   > ```
+
 3. **Verify the installation:**
    ```bash
    kubectl get pods -w
