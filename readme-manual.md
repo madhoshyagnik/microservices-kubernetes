@@ -394,7 +394,7 @@ Once the cluster is up and healthy, you can install the OpenTelemetry Demo:
 
 2. **Install the OpenTelemetry Demo chart:**
    ```bash
-   helm install my-otel-demo open-telemetry/opentelemetry-demo
+   helm install my-otel-demo open-telemetry/opentelemetry-demo --set grafana.shadowBundledPlugins=true
    ```
 
 3. **Verify the installation:**
