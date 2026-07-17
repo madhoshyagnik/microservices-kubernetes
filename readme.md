@@ -27,7 +27,12 @@ The playbook performs the following tasks:
 ```text
 .
 ├── inventory.yaml
-└── playbook.yaml
+├── provision-k3s.yaml (Provisions the K3s cluster)
+├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
+├── doc/
+│   └── readme-manual.md (Manual VM setup guide)
+└── roles/
+    └── k3s/ (Modular Ansible role for K3s tasks)
 ```
 
 ---
@@ -77,13 +82,13 @@ all:
 Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
 
 ```bash
-ansible-playbook -i inventory.yaml playbook.yaml --check
+ansible-playbook -i inventory.yaml provision-k3s.yaml --check
 ```
 
 To run and apply the playbook:
 
 ```bash
-ansible-playbook -i inventory.yaml playbook.yaml
+ansible-playbook -i inventory.yaml provision-k3s.yaml
 ```
 
 ---
@@ -167,17 +172,17 @@ Re-running it will:
 - Reapply the control-plane taint if necessary
 
 ```bash
-ansible-playbook -i inventory.yaml playbook.yaml
+ansible-playbook -i inventory.yaml provision-k3s.yaml
 ```
 
 ---
 
 ## Uninstalling / Reverting K3s
 
-To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the revert playbook on the host:
+To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the uninstall playbook on the host:
 
 ```bash
-ansible-playbook -i inventory.yaml revert.yaml
+ansible-playbook -i inventory.yaml uninstall-k3s.yaml
 ```
 
 ### Manual Uninstall (Fallback)

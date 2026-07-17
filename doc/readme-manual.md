@@ -117,7 +117,7 @@ vagrant up
 If the VMs were previously used for Kubernetes, you can automatically reset them to a clean state without destroying and recreating the VMs:
 
 ```bash
-ansible-playbook -i inventory.yaml revert.yaml
+ansible-playbook -i inventory.yaml uninstall-k3s.yaml
 ```
 
 ### Manual Uninstall (Fallback)
