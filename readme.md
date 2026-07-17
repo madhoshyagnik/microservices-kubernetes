@@ -10,6 +10,7 @@
 | **[Ansible](https://docs.ansible.com/)** | An agentless infrastructure automation tool. Playbooks (written in YAML) define the desired state of your servers, and Ansible connects over SSH to enforce that state — no agent installation required on target nodes. |
 | **[Vagrant](https://www.vagrantup.com/)** | A tool for building and managing reproducible virtual machine environments using a declarative `Vagrantfile`. It provisions local VMs (via VirtualBox, libvirt, etc.) that simulate real multi-node infrastructure on a single workstation. |
 | **[Helm](https://helm.sh/)** | The package manager for Kubernetes. Helm charts bundle all the manifests, configs, and defaults needed to deploy complex applications (like the OpenTelemetry demo) into a cluster with a single command. |
+| **[MetalLB](https://metallb.io/)** | A load balancer implementation for bare-metal Kubernetes clusters. It assigns external IP addresses to `LoadBalancer` Services and advertises them on the local network using Layer 2 or BGP modes. |
 | **[kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)** | A YAML configuration file that `kubectl` uses to authenticate and connect to a Kubernetes cluster. This playbook automatically retrieves it from the control plane and configures it on the host. |
 | **[Control Plane Tainting](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)** | A Kubernetes mechanism to prevent regular workload pods from being scheduled on control plane nodes. This reserves the control plane for cluster management duties only. |
 
@@ -272,14 +273,153 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    kubectl get pods -w
    ```
 
-4. **Access the demo application:**
+4. **Access the demo application using port forwarding, or create a MetalLB LoadBalancer as described in the next section:**
    ```bash
    kubectl --namespace default port-forward svc/frontend-proxy 8080:8080
    ```
    Once running, open [http://localhost:8080](http://localhost:8080) in your browser to access the OpenTelemetry demo frontend.
 
-> [!NOTE]
-> **Upcoming: [MetalLB](https://metallb.io/) Integration**
-> MetalLB load balancer integration is planned for a future update. This will enable `LoadBalancer`-type Services to receive external IPs in bare-metal / local clusters, eliminating the need for manual port-forwarding.
+
+---
+
+## Adding MetalLB LoadBalancer Support
+
+K3s does not provide a cloud-provider load balancer in a local Vagrant environment. Without an external load balancer implementation, `LoadBalancer` Services remain backed by a `NodePort` and do not receive an external IP address.
+
+[MetalLB](https://metallb.io/) provides this functionality for bare-metal and local clusters by assigning external IP addresses from a configured pool and advertising them on the local network.
+
+### Install MetalLB
+
+MetalLB can be installed using the official Helm chart:
+
+```bash
+helm repo add metallb https://metallb.github.io/metallb
+helm repo update
+
+helm install metallb metallb/metallb \
+  -n metallb-system \
+  --create-namespace
+```
+
+The default Helm values are sufficient for this local cluster. A custom `values.yaml` file can be supplied for advanced configuration:
+
+```bash
+helm install metallb metallb/metallb \
+  -n metallb-system \
+  -f values.yaml
+```
+
+Verify the installation:
+
+```bash
+kubectl get pods -n metallb-system
+kubectl get deployment -n metallb-system
+```
+
+All MetalLB components should be running before creating the load balancer configuration.
+
+### Configure the IP Address Pool
+
+The Vagrant nodes use the host-only network (`192.168.56.0/24`). A range of unused addresses from this network is allocated for `LoadBalancer` Services.
+
+The allocated range must not overlap with VM addresses or other devices on the network.
+
+Example `metallb-config.yaml`:
+
+```yaml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lab-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.56.200-192.168.56.220
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lab-advertisement
+  namespace: metallb-system
+```
+
+Apply the configuration:
+
+```bash
+kubectl apply -f metallb-config.yaml
+```
+
+Verify:
+
+```bash
+kubectl get ipaddresspool -n metallb-system
+kubectl get l2advertisement -n metallb-system
+```
+
+### Expose the OpenTelemetry Frontend
+
+The OpenTelemetry demo frontend uses the `frontend-proxy` Service. Change it from `ClusterIP` to `LoadBalancer`:
+
+```bash
+kubectl patch svc frontend-proxy \
+  -p '{"spec":{"type":"LoadBalancer"}}'
+```
+
+Verify the assigned external IP:
+
+```bash
+kubectl get svc frontend-proxy
+```
+
+Example:
+
+```text
+NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
+frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
+```
+
+The application is now accessible directly:
+
+```text
+http://192.168.56.201:8080
+```
+
+---
+
+> [!IMPORTANT]
+> **Troubleshooting: MetalLB Webhook Endpoint Missing**
+>
+> * **Issue**: Applying `IPAddressPool` or `L2Advertisement` failed with:
+>
+>   ```
+>   failed calling webhook:
+>   no endpoints available for service "metallb-webhook-service"
+>   ```
+>
+> * **Cause**: The MetalLB webhook service was created, but the controller was not yet available as a webhook endpoint when the configuration was applied.
+>
+> * **Resolution**: Restart the MetalLB controller deployment:
+>
+>   ```bash
+>   kubectl rollout restart deployment metallb-controller -n metallb-system
+>   ```
+>
+>   Verify the webhook endpoint:
+>
+>   ```bash
+>   kubectl get endpoints -n metallb-system metallb-webhook-service
+>   ```
+>
+>   Example:
+>
+>   ```text
+>   NAME                      ENDPOINTS
+>   metallb-webhook-service   10.42.2.36:9443
+>   ```
+>
+>   After the endpoint became available, the MetalLB configuration applied successfully.
+
+```
 
 For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).
