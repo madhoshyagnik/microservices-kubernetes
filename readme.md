@@ -420,6 +420,5 @@ http://192.168.56.201:8080
 >
 >   After the endpoint became available, the MetalLB configuration applied successfully.
 
-```
 
 For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).
