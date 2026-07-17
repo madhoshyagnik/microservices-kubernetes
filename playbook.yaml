@@ -50,10 +50,9 @@
         curl -sfL https://get.k3s.io | \
         INSTALL_K3S_EXEC="server \
         --node-ip {{ k3s_server_ip }} \
+        --flannel-iface eth1 \
         --token {{ k3s_token }}" \
         sh -
-      args:
-        creates: /usr/local/bin/k3s
 
     - name: Ensure K3s service is running
       service:
@@ -81,10 +80,9 @@
         INSTALL_K3S_EXEC="agent \
         --server https://{{ k3s_server_ip }}:6443 \
         --token {{ k3s_token }} \
-        --node-ip {{ ansible_host }}" \
+        --node-ip {{ ansible_host }} \
+        --flannel-iface eth1" \
         sh -s -
-      args:
-        creates: /usr/local/bin/k3s-agent
 
     - name: Ensure K3s agent service is running
       service:

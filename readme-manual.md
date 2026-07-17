@@ -1,5 +1,10 @@
 # Setting Up a Local Multi-Node K3s Cluster with Vagrant
 
+> [!IMPORTANT]
+> **Troubleshooting: Multi-Node Flannel Networking / Cluster DNS Issues**
+> * **Issue**: In Vagrant-based multi-node setups, Flannel CNI defaults to binding on the `eth0` NAT interface, causing all nodes to share the same tunnel IP (`10.0.2.15`). This breaks cross-node pod communication, causing cluster DNS (`coredns`) and services to fail.
+> * **Resolution**: Configured K3s on both the control plane and agents to bind Flannel explicitly to the private network interface (`eth1`) by passing the `--flannel-iface eth1` argument.
+
 ## Prerequisites
 
 Ensure the following software is installed on the host machine before proceeding:
@@ -163,6 +168,7 @@ Install K3s:
 curl -sfL https://get.k3s.io | \
 INSTALL_K3S_EXEC="server \
 --node-ip 192.168.56.11 \
+--flannel-iface eth1 \
 --token DkPS01xep_{8" \
 sh -
 ```
@@ -200,7 +206,8 @@ curl -sfL https://get.k3s.io | \
 INSTALL_K3S_EXEC="agent \
 --server https://192.168.56.11:6443 \
 --token DkPS01xep_{8 \
---node-ip 192.168.56.12" \
+--node-ip 192.168.56.12 \
+--flannel-iface eth1" \
 sh -s -
 ```
 
@@ -372,3 +379,27 @@ The cluster is ready for application deployments once the following have been ve
 - Container images pull successfully
 - DNS resolution works
 - No recurring warning events are present
+
+---
+
+## 15. Deploying the OpenTelemetry Demo
+
+Once the cluster is up and healthy, you can install the OpenTelemetry Demo:
+
+1. **Add the OpenTelemetry Helm repository:**
+   ```bash
+   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+   helm repo update
+   ```
+
+2. **Install the OpenTelemetry Demo chart:**
+   ```bash
+   helm install my-otel-demo open-telemetry/opentelemetry-demo
+   ```
+
+3. **Verify the installation:**
+   ```bash
+   kubectl get pods -w
+   ```
+
+For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).

@@ -1,5 +1,10 @@
 # Provisioning the K3s Cluster Using Ansible
 
+> [!IMPORTANT]
+> **Troubleshooting: Multi-Node Flannel Networking / Cluster DNS Issues**
+> * **Issue**: In Vagrant-based multi-node setups, Flannel CNI defaults to binding on the `eth0` NAT interface, causing all nodes to share the same tunnel IP (`10.0.2.15`). This breaks cross-node pod communication, causing cluster DNS (`coredns`) and services to fail.
+> * **Resolution**: Configured K3s on both the control plane and agents to bind Flannel explicitly to the private network interface (`eth1`) by passing the `--flannel-iface eth1` argument.
+
 This repository includes an Ansible playbook that automates the complete K3s cluster provisioning process.
 
 The playbook performs the following tasks:
@@ -181,3 +186,27 @@ sudo /usr/local/bin/k3s-agent-uninstall.sh
 sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet
 sudo reboot
 ```
+
+---
+
+## Deploying the OpenTelemetry Demo
+
+Once your cluster is fully provisioned and healthy, you can deploy the OpenTelemetry Demo:
+
+1. **Add the OpenTelemetry Helm repository:**
+   ```bash
+   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+   helm repo update
+   ```
+
+2. **Install the OpenTelemetry Demo chart:**
+   ```bash
+   helm install my-otel-demo open-telemetry/opentelemetry-demo
+   ```
+
+3. **Verify the installation:**
+   ```bash
+   kubectl get pods -w
+   ```
+
+For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).
