@@ -267,4 +267,14 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    kubectl get pods -w
    ```
 
+4. **Access the demo application:**
+   ```bash
+   kubectl --namespace default port-forward svc/frontend-proxy 8080:8080
+   ```
+   Once running, open [http://localhost:8080](http://localhost:8080) in your browser to access the OpenTelemetry demo frontend.
+
+> [!NOTE]
+> **Upcoming: [MetalLB](https://metallb.io/) Integration**
+> MetalLB load balancer integration is planned for a future update. This will enable `LoadBalancer`-type Services to receive external IPs in bare-metal / local clusters, eliminating the need for manual port-forwarding.
+
 For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).
