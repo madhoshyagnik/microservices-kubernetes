@@ -280,6 +280,53 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    Once running, open [http://localhost:8080](http://localhost:8080) in your browser to access the OpenTelemetry demo frontend.
 
 
-For manual MetalLB installation and configuration, refer to `Documentation/readme-manual-k3s-deployment.md`.
+   **Using the MetalLB LoadBalancer:**
+
+   Patch the service:
+
+   ```bash
+   kubectl patch svc frontend-proxy \
+     -p '{"spec":{"type":"LoadBalancer"}}'
+   ```
+
+   Verify the assigned external IP:
+
+   ```bash
+   kubectl get svc frontend-proxy
+   ```
+
+   Example:
+
+   ```text
+   NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
+   frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
+   ```
+
+   Access the application:
+
+   ```text
+   http://192.168.56.201:8080
+   ```
+
+---
+
+## MetalLB
+
+MetalLB is automatically installed and configured by the Ansible playbook during cluster provisioning.
+
+The playbook:
+- Installs MetalLB using the official Helm chart.
+- Creates the `IPAddressPool` and `L2Advertisement` resources.
+- Configures the IP address pool defined by `metallb_pool` in `roles/metallb/defaults/main.yml`.
+
+By default, the following range is used:
+
+```text
+192.168.56.200-192.168.56.220
+```
+
+If you need to change the available LoadBalancer IP range, update the `metallb_pool` variable and rerun the MetalLB playbook.
+
+For detailed MetalLB installation and configuration instructions, refer to `Documentation/readme-manual-k3s-deployment.md`.
 
 ---
