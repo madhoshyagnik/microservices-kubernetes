@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Verify local prerequisites for managing the Kubernetes cluster.
+
+- name: Verify kubectl is installed
+  command: kubectl version --client
+  register: kubectl_check
+  changed_when: false
+  failed_when: kubectl_check.rc != 0
+
+- name: Verify Helm is installed
+  command: helm version
+  register: helm_check
+  changed_when: false
+  failed_when: helm_check.rc != 0
+
+- name: Verify kubeconfig is available
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.kube/config"
+  register: kubeconfig
+
+- name: Fail if kubeconfig is missing
+  fail:
+    msg: >
+      kubeconfig not found at {{ lookup('env', 'HOME') }}/.kube/config.
+      Run the K3s configure role before installing MetalLB.
+  when: not kubeconfig.stat.exists
+
+- name: Verify cluster connectivity
+  command: kubectl get nodes
+  register: cluster_check
+  changed_when: false
+  failed_when: cluster_check.rc != 0
+
+- name: Display cluster nodes
+  debug:
+    var: cluster_check.stdout_lines

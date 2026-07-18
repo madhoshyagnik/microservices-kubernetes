@@ -281,7 +281,7 @@ sudo kubectl get nodes -o wide
 
 Expected:
 
-- Four nodes
+- Five nodes
 - All nodes in the **Ready** state
 
 Verify cluster components:

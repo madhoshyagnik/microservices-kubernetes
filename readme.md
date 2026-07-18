@@ -118,13 +118,13 @@ k3s_token: "DkPS01xep_{8"
 Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml --check
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml --check
 ```
 
 To run and apply the playbook:
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
 ---
@@ -209,7 +209,7 @@ Re-running it will:
 - Reapply the control-plane taint if necessary
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
 ---
@@ -219,7 +219,7 @@ ansible-playbook -i inventory.yaml deploy-k3s.yaml
 To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the uninstall playbook on the host:
 
 ```bash
-ansible-playbook -i inventory.yaml uninstall-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/uninstall-k3s.yaml
 ```
 
 ### Manual Uninstall (Fallback)

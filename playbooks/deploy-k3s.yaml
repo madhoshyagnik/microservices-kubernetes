@@ -34,3 +34,10 @@
     - role: ./roles/k3s
       vars:
         k3s_action: configure
+
+- name: Install MetalLB
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: ./roles/metallb
