@@ -4,7 +4,7 @@
   become: true
   gather_facts: true
   roles:
-    - role: k3s
+    - role: ./roles/k3s
       vars:
         k3s_action: bootstrap
 
@@ -13,7 +13,7 @@
   become: true
   gather_facts: true
   roles:
-    - role: k3s
+    - role: ./roles/k3s
       vars:
         k3s_action: server
 
@@ -22,7 +22,7 @@
   become: true
   gather_facts: true
   roles:
-    - role: k3s
+    - role: ./roles/k3s
       vars:
         k3s_action: agent
 
@@ -31,6 +31,6 @@
   become: true
   gather_facts: true
   roles:
-    - role: k3s
+    - role: ./roles/k3s
       vars:
         k3s_action: configure
