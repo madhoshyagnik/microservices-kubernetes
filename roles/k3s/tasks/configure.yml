@@ -4,7 +4,7 @@
   register: nodes
   retries: 20
   delay: 5
-  until: nodes.stdout_lines | length == 4
+  until: nodes.stdout_lines | length == 5
   changed_when: false
 
 - name: Taint control plane

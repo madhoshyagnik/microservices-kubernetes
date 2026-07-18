@@ -1,17 +1,9 @@
 ---
-- name: Update apt cache
-  apt:
-    update_cache: yes
-    cache_valid_time: 3600
-
-- name: Upgrade installed packages
-  apt:
-    upgrade: yes
-
 - name: Install required packages
   apt:
     name: "{{ packages }}"
     state: present
+    update_cache: yes
 
 - name: Check if reboot is required
   stat:
