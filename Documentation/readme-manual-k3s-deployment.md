@@ -457,4 +457,144 @@ Once the cluster is up and healthy, you can install the OpenTelemetry Demo:
    kubectl get pods -w
    ```
 
+---
+
+## Adding MetalLB LoadBalancer Support
+
+K3s does not provide a cloud-provider load balancer in a local Vagrant environment. Without an external load balancer implementation, `LoadBalancer` Services remain backed by a `NodePort` and do not receive an external IP address.
+
+[MetalLB](https://metallb.io/) provides this functionality for bare-metal and local clusters by assigning external IP addresses from a configured pool and advertising them on the local network.
+
+### Install MetalLB
+
+MetalLB can be installed using the official Helm chart:
+
+```bash
+helm repo add metallb https://metallb.github.io/metallb
+helm repo update
+
+helm install metallb metallb/metallb \
+  -n metallb-system \
+  --create-namespace
+```
+
+The default Helm values are sufficient for this local cluster. A custom `values.yaml` file can be supplied for advanced configuration:
+
+```bash
+helm install metallb metallb/metallb \
+  -n metallb-system \
+  -f values.yaml
+```
+
+Verify the installation:
+
+```bash
+kubectl get pods -n metallb-system
+kubectl get deployment -n metallb-system
+```
+
+All MetalLB components should be running before creating the load balancer configuration.
+
+### Configure the IP Address Pool
+
+The Vagrant nodes use the host-only network (`192.168.56.0/24`). A range of unused addresses from this network is allocated for `LoadBalancer` Services.
+
+The allocated range must not overlap with VM addresses or other devices on the network.
+
+Example `metallb-config.yaml` (`kubernetes-manifests/metallb-config.yaml`):
+
+```yaml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lab-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.56.200-192.168.56.220
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lab-advertisement
+  namespace: metallb-system
+```
+
+Apply the configuration:
+
+```bash
+kubectl apply -f metallb-config.yaml
+```
+
+Verify:
+
+```bash
+kubectl get ipaddresspool -n metallb-system
+kubectl get l2advertisement -n metallb-system
+```
+
+### Expose the OpenTelemetry Frontend
+
+The OpenTelemetry demo frontend uses the `frontend-proxy` Service. Change it from `ClusterIP` to `LoadBalancer`:
+
+```bash
+kubectl patch svc frontend-proxy \
+  -p '{"spec":{"type":"LoadBalancer"}}'
+```
+
+Verify the assigned external IP:
+
+```bash
+kubectl get svc frontend-proxy
+```
+
+Example:
+
+```text
+NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
+frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
+```
+
+The application is now accessible directly:
+
+```text
+http://192.168.56.201:8080
+```
+
+---
+
+> [!IMPORTANT]
+> **Troubleshooting: MetalLB Webhook Endpoint Missing**
+>
+> * **Issue**: Applying `IPAddressPool` or `L2Advertisement` failed with:
+>
+>   ```
+>   failed calling webhook:
+>   no endpoints available for service "metallb-webhook-service"
+>   ```
+>
+> * **Cause**: The MetalLB webhook service was created, but the controller was not yet available as a webhook endpoint when the configuration was applied.
+>
+> * **Resolution**: Restart the MetalLB controller deployment:
+>
+>   ```bash
+>   kubectl rollout restart deployment metallb-controller -n metallb-system
+>   ```
+>
+>   Verify the webhook endpoint:
+>
+>   ```bash
+>   kubectl get endpoints -n metallb-system metallb-webhook-service
+>   ```
+>
+>   Example:
+>
+>   ```text
+>   NAME                      ENDPOINTS
+>   metallb-webhook-service   10.42.2.36:9443
+>   ```
+>
+>   After the endpoint became available, the MetalLB configuration applied successfully.
+
 For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).

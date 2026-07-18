@@ -273,7 +273,7 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    kubectl get pods -w
    ```
 
-4. **Access the demo application using port forwarding, or create a MetalLB LoadBalancer as described in the next section:**
+4. **Access the demo application using port forwarding, or expose it using a MetalLB `LoadBalancer` (if installed manually or provisioned by the Ansible playbook):**
    ```bash
    kubectl --namespace default port-forward svc/frontend-proxy 8080:8080
    ```
@@ -324,7 +324,7 @@ The Vagrant nodes use the host-only network (`192.168.56.0/24`). A range of unus
 
 The allocated range must not overlap with VM addresses or other devices on the network.
 
-Example `metallb-config.yaml`:
+Example `metallb-config.yaml` (`kubernetes-manifests/metallb-config.yaml`):
 
 ```yaml
 apiVersion: metallb.io/v1beta1
