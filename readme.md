@@ -58,13 +58,17 @@ The playbook performs the following tasks:
 
 ```text
 .
-├── inventory.yaml
-├── deploy-k3s.yaml (Deploys the K3s cluster)
-├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
+├── inventory/inventory.yaml
+├── inventory/group_vars/all.yaml
+├── playbooks/deploy-k3s.yaml    (Deploys the K3s cluster)
+├── playbooks/uninstall-k3s.yaml (Uninstalls K3s and resets state)
 ├── Documentation/
-│   └── readme-manual.md (Manual VM setup guide)
+│   └── readme-manual-k3s-deployment.md (Manual VM setup guide)
+│   └── readme-manual-k3s-deployment.md 
+│   └── knowledge-docs/additional-understanding-doc.md
 └── roles/
-    └── k3s/ (Modular Ansible role for K3s tasks)
+    └── k3s/     (Modular Ansible role for K3s tasks)
+    └── metallb/ (Modular Ansible role for K3s tasks)
 ```
 
 ---
@@ -73,7 +77,7 @@ The playbook performs the following tasks:
 
 The inventory defines the control plane and worker nodes, while shared variables are stored separately in `group_vars/all.yml`.
 
-Update `group_vars/all.yml` with your cluster-specific values, and keep the inventory focused on node addresses.
+Update `inventory/inventory.yaml` with your cluster-specific values, and keep the inventory focused on node addresses.
 
 Example inventory:
 
@@ -101,7 +105,7 @@ all:
         workers:
 ```
 
-Example `group_vars/all.yml`:
+Example `inventory/group_vars/all.yml`:
 
 ```yaml
 ansible_user: vagrant
@@ -137,6 +141,9 @@ ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 - Upgrades installed packages
 - Installs:
   - curl
+  - dnsutils
+  - telnet
+  - net-tools
   - wget
   - git
   - vim
