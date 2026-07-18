@@ -58,13 +58,17 @@ The playbook performs the following tasks:
 
 ```text
 .
-├── inventory.yaml
-├── deploy-k3s.yaml (Deploys the K3s cluster)
-├── uninstall-k3s.yaml (Uninstalls K3s and resets state)
+├── inventory/inventory.yaml
+├── inventory/group_vars/all.yaml
+├── playbooks/deploy-k3s.yaml    (Deploys the K3s cluster)
+├── playbooks/uninstall-k3s.yaml (Uninstalls K3s and resets state)
 ├── Documentation/
-│   └── readme-manual.md (Manual VM setup guide)
+│   └── readme-manual-k3s-deployment.md (Manual VM setup guide)
+│   └── readme-manual-k3s-deployment.md 
+│   └── knowledge-docs/additional-understanding-doc.md
 └── roles/
-    └── k3s/ (Modular Ansible role for K3s tasks)
+    └── k3s/     (Modular Ansible role for K3s tasks)
+    └── metallb/ (Modular Ansible role for K3s tasks)
 ```
 
 ---
@@ -73,7 +77,7 @@ The playbook performs the following tasks:
 
 The inventory defines the control plane and worker nodes, while shared variables are stored separately in `group_vars/all.yml`.
 
-Update `group_vars/all.yml` with your cluster-specific values, and keep the inventory focused on node addresses.
+Update `inventory/inventory.yaml` with your cluster-specific values, and keep the inventory focused on node addresses.
 
 Example inventory:
 
@@ -101,7 +105,7 @@ all:
         workers:
 ```
 
-Example `group_vars/all.yml`:
+Example `inventory/group_vars/all.yml`:
 
 ```yaml
 ansible_user: vagrant
@@ -118,13 +122,13 @@ k3s_token: "DkPS01xep_{8"
 Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml --check
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml --check
 ```
 
 To run and apply the playbook:
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
 ---
@@ -137,6 +141,9 @@ ansible-playbook -i inventory.yaml deploy-k3s.yaml
 - Upgrades installed packages
 - Installs:
   - curl
+  - dnsutils
+  - telnet
+  - net-tools
   - wget
   - git
   - vim
@@ -209,7 +216,7 @@ Re-running it will:
 - Reapply the control-plane taint if necessary
 
 ```bash
-ansible-playbook -i inventory.yaml deploy-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
 ---
@@ -219,7 +226,7 @@ ansible-playbook -i inventory.yaml deploy-k3s.yaml
 To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the uninstall playbook on the host:
 
 ```bash
-ansible-playbook -i inventory.yaml uninstall-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/uninstall-k3s.yaml
 ```
 
 ### Manual Uninstall (Fallback)
@@ -273,152 +280,60 @@ Once your cluster is fully provisioned and healthy, you can deploy the OpenTelem
    kubectl get pods -w
    ```
 
-4. **Access the demo application using port forwarding, or create a MetalLB LoadBalancer as described in the next section:**
+4. **Access the demo application using port forwarding, or expose it using a MetalLB `LoadBalancer` (if installed manually or provisioned by the Ansible playbook):**
    ```bash
    kubectl --namespace default port-forward svc/frontend-proxy 8080:8080
    ```
    Once running, open [http://localhost:8080](http://localhost:8080) in your browser to access the OpenTelemetry demo frontend.
 
 
----
+   **Using the MetalLB LoadBalancer:**
 
-## Adding MetalLB LoadBalancer Support
+   Patch the service:
 
-K3s does not provide a cloud-provider load balancer in a local Vagrant environment. Without an external load balancer implementation, `LoadBalancer` Services remain backed by a `NodePort` and do not receive an external IP address.
+   ```bash
+   kubectl patch svc frontend-proxy \
+     -p '{"spec":{"type":"LoadBalancer"}}'
+   ```
 
-[MetalLB](https://metallb.io/) provides this functionality for bare-metal and local clusters by assigning external IP addresses from a configured pool and advertising them on the local network.
+   Verify the assigned external IP:
 
-### Install MetalLB
+   ```bash
+   kubectl get svc frontend-proxy
+   ```
 
-MetalLB can be installed using the official Helm chart:
+   Example:
 
-```bash
-helm repo add metallb https://metallb.github.io/metallb
-helm repo update
+   ```text
+   NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
+   frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
+   ```
 
-helm install metallb metallb/metallb \
-  -n metallb-system \
-  --create-namespace
-```
+   Access the application:
 
-The default Helm values are sufficient for this local cluster. A custom `values.yaml` file can be supplied for advanced configuration:
-
-```bash
-helm install metallb metallb/metallb \
-  -n metallb-system \
-  -f values.yaml
-```
-
-Verify the installation:
-
-```bash
-kubectl get pods -n metallb-system
-kubectl get deployment -n metallb-system
-```
-
-All MetalLB components should be running before creating the load balancer configuration.
-
-### Configure the IP Address Pool
-
-The Vagrant nodes use the host-only network (`192.168.56.0/24`). A range of unused addresses from this network is allocated for `LoadBalancer` Services.
-
-The allocated range must not overlap with VM addresses or other devices on the network.
-
-Example `metallb-config.yaml`:
-
-```yaml
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: lab-pool
-  namespace: metallb-system
-spec:
-  addresses:
-  - 192.168.56.200-192.168.56.220
+   ```text
+   http://192.168.56.201:8080
+   ```
 
 ---
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: lab-advertisement
-  namespace: metallb-system
-```
 
-Apply the configuration:
+## MetalLB
 
-```bash
-kubectl apply -f metallb-config.yaml
-```
+MetalLB is automatically installed and configured by the Ansible playbook during cluster provisioning.
 
-Verify:
+The playbook:
+- Installs MetalLB using the official Helm chart.
+- Creates the `IPAddressPool` and `L2Advertisement` resources.
+- Configures the IP address pool defined by `metallb_pool` in `roles/metallb/defaults/main.yml`.
 
-```bash
-kubectl get ipaddresspool -n metallb-system
-kubectl get l2advertisement -n metallb-system
-```
-
-### Expose the OpenTelemetry Frontend
-
-The OpenTelemetry demo frontend uses the `frontend-proxy` Service. Change it from `ClusterIP` to `LoadBalancer`:
-
-```bash
-kubectl patch svc frontend-proxy \
-  -p '{"spec":{"type":"LoadBalancer"}}'
-```
-
-Verify the assigned external IP:
-
-```bash
-kubectl get svc frontend-proxy
-```
-
-Example:
+By default, the following range is used:
 
 ```text
-NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
-frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
+192.168.56.200-192.168.56.220
 ```
 
-The application is now accessible directly:
+If you need to change the available LoadBalancer IP range, update the `metallb_pool` variable and rerun the MetalLB playbook.
 
-```text
-http://192.168.56.201:8080
-```
+For detailed MetalLB installation and configuration instructions, refer to `Documentation/readme-manual-k3s-deployment.md`.
 
 ---
-
-> [!IMPORTANT]
-> **Troubleshooting: MetalLB Webhook Endpoint Missing**
->
-> * **Issue**: Applying `IPAddressPool` or `L2Advertisement` failed with:
->
->   ```
->   failed calling webhook:
->   no endpoints available for service "metallb-webhook-service"
->   ```
->
-> * **Cause**: The MetalLB webhook service was created, but the controller was not yet available as a webhook endpoint when the configuration was applied.
->
-> * **Resolution**: Restart the MetalLB controller deployment:
->
->   ```bash
->   kubectl rollout restart deployment metallb-controller -n metallb-system
->   ```
->
->   Verify the webhook endpoint:
->
->   ```bash
->   kubectl get endpoints -n metallb-system metallb-webhook-service
->   ```
->
->   Example:
->
->   ```text
->   NAME                      ENDPOINTS
->   metallb-webhook-service   10.42.2.36:9443
->   ```
->
->   After the endpoint became available, the MetalLB configuration applied successfully.
-
-
-For advanced configuration, scaling, and custom parameters, refer to the [OpenTelemetry Kubernetes Deployment Documentation](https://opentelemetry.io/docs/demo/kubernetes-deployment/).

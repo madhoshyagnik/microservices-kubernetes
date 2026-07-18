@@ -87,7 +87,7 @@ Vagrant.configure("2") do |config|
 
     node.vm.provider "virtualbox" do |vb|
       vb.name = "debian1"
-      vb.memory = 8192
+      vb.memory = 6144
       vb.cpus = 4
     end
   end
@@ -124,6 +124,17 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
     end
   end
+
+  config.vm.define "debian5" do |node|
+    node.vm.hostname = "debian5"
+    node.vm.network "private_network", ip: "192.168.56.15"
+
+    node.vm.provider "virtualbox" do |vb|
+      vb.name = "debian5"
+      vb.memory = 4096
+      vb.cpus = 2
+    end
+  end
 end
 ```
 
@@ -145,6 +156,7 @@ vagrant up
 | debian2 | 192.168.56.12 | Worker |
 | debian3 | 192.168.56.13 | Worker |
 | debian4 | 192.168.56.14 | Worker |
+| debian5 | 192.168.56.15 | Worker |
 
 ---
 
@@ -201,6 +213,7 @@ Repeat for:
 - debian2
 - debian3
 - debian4
+- debian5
 
 Verify connectivity:
 
@@ -209,6 +222,7 @@ ssh vagrant@192.168.56.11
 ssh vagrant@192.168.56.12
 ssh vagrant@192.168.56.13
 ssh vagrant@192.168.56.14
+ssh vagrant@192.168.56.15
 ```
 
 ------------------------------------------------------------------------
@@ -233,6 +247,7 @@ ping -c 3 192.168.56.11
 ping -c 3 192.168.56.12
 ping -c 3 192.168.56.13
 ping -c 3 192.168.56.14
+ping -c 3 192.168.56.15
 ```
 
 ### Why `--flannel-iface eth1`?
@@ -310,7 +325,7 @@ sudo cat /var/lib/rancher/k3s/server/node-token
 
 ## 7. Join Worker Nodes
 
-Repeat the following on **debian2**, **debian3**, and **debian4**.
+Repeat the following on **debian2**, **debian3**, **debian4** and **debian5**.
 
 Install required packages:
 
@@ -336,6 +351,7 @@ Update only the `--node-ip` value:
 
 - debian3 → `192.168.56.13`
 - debian4 → `192.168.56.14`
+- debian5 → `192.168.56.15`
 
 Verify:
 
@@ -371,6 +387,7 @@ Every node should have a unique Internal IP:
 -   192.168.56.12
 -   192.168.56.13
 -   192.168.56.14
+-   192.168.56.15
 
 If every node reports `10.0.2.15`, Flannel is using the wrong interface.
 

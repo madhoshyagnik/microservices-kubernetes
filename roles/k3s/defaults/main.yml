@@ -2,6 +2,9 @@
 # defaults file for k3s
 packages:
   - curl
+  - dnsutils
+  - telnet
+  - net-tools
   - wget
   - git
   - vim

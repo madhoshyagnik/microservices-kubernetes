@@ -1,0 +1,4 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for metallb
+metallb_pool: "192.168.56.200-192.168.56.220"

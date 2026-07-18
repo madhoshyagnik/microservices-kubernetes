@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Install MetalLB using Helm and wait until all components are ready.
+
+- name: Add MetalLB Helm repository
+  command: >
+    helm repo add metallb https://metallb.github.io/metallb
+  changed_when: false
+
+- name: Update Helm repositories
+  command: helm repo update
+  changed_when: false
+
+- name: Install MetalLB
+  command: >
+    helm upgrade --install metallb metallb/metallb
+    --namespace metallb-system
+    --create-namespace
+    --wait
+    --atomic
+
+- name: Wait for MetalLB controller rollout
+  command: >
+    kubectl rollout status deployment/metallb-controller
+    --namespace metallb-system
+    --timeout=120s
+  register: controller_rollout
+  retries: 3
+  delay: 5
+  until: controller_rollout.rc == 0
+  changed_when: false
+
+- name: Wait for MetalLB speaker rollout
+  command: >
+    kubectl rollout status daemonset/metallb-speaker
+    --namespace metallb-system
+    --timeout=120s
+  register: speaker_rollout
+  retries: 3
+  delay: 5
+  until: speaker_rollout.rc == 0
+  changed_when: false
+
+- name: Wait for MetalLB webhook endpoint
+  command:
+    argv:
+      - kubectl
+      - get
+      - endpoints
+      - metallb-webhook-service
+      - --namespace
+      
+      - metallb-system
+      - -o
+      - jsonpath={.subsets[0].addresses[0].ip}
+  register: webhook
+  retries: 20
+  delay: 5
+  until: webhook.stdout | length > 0
+  changed_when: false
