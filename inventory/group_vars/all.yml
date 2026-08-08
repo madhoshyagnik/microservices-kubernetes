@@ -1,7 +1,6 @@
 ---
-# Shared cluster variables for K3s provisioning
+# Shared variables for K3s provisioning
 ansible_user: vagrant
 ansible_python_interpreter: /usr/bin/python3
-
 k3s_server_ip: 192.168.56.11
 k3s_token: "DkPS01xep_{8"

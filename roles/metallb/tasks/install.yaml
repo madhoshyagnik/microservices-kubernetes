@@ -3,16 +3,16 @@
 # Install MetalLB using Helm and wait until all components are ready.
 
 - name: Add MetalLB Helm repository
-  command: >
+  ansible.builtin.command: >
     helm repo add metallb https://metallb.github.io/metallb
   changed_when: false
 
 - name: Update Helm repositories
-  command: helm repo update
+  ansible.builtin.command: helm repo update
   changed_when: false
 
 - name: Install MetalLB
-  command: >
+  ansible.builtin.command: >
     helm upgrade --install metallb metallb/metallb
     --namespace metallb-system
     --create-namespace
@@ -20,7 +20,7 @@
     --atomic
 
 - name: Wait for MetalLB controller rollout
-  command: >
+  ansible.builtin.command: >
     kubectl rollout status deployment/metallb-controller
     --namespace metallb-system
     --timeout=120s
@@ -31,7 +31,7 @@
   changed_when: false
 
 - name: Wait for MetalLB speaker rollout
-  command: >
+  ansible.builtin.command: >
     kubectl rollout status daemonset/metallb-speaker
     --namespace metallb-system
     --timeout=120s
@@ -42,7 +42,7 @@
   changed_when: false
 
 - name: Wait for MetalLB webhook endpoint
-  command:
+  ansible.builtin.command:
     argv:
       - kubectl
       - get

@@ -1,17 +1,17 @@
 ---
 - name: Install required packages
-  apt:
+  ansible.builtin.apt:
     name: "{{ packages }}"
     state: present
     update_cache: yes
 
 - name: Check if reboot is required
-  stat:
+  ansible.builtin.stat:
     path: /var/run/reboot-required
   register: reboot_required
 
 - name: Reboot if required
-  reboot:
+  ansible.builtin.reboot:
     reboot_timeout: 600
     post_reboot_delay: 10
   when: reboot_required.stat.exists
