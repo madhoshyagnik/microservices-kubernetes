@@ -9,7 +9,7 @@
         k3s_action: bootstrap
 
 - name: Install K3s Server
-  hosts: control
+  hosts: control_nodes
   become: true
   gather_facts: true
   roles:

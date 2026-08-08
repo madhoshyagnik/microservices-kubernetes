@@ -103,8 +103,8 @@ all:
           ansible_host: 192.168.56.15
     k3s:
       children:
-        control:
-        workers:
+        control_nodes:
+        worker_nodes:
 ```
 
 Example `inventory/group_vars/all.yml`:
