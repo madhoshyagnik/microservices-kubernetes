@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- import_tasks: preflight.yaml
+- name: Verify host-local prerequisites (kubectl, helm, kubeconfig, cluster-connectivity)
+  ansible.builtin.import_tasks: preflight.yaml
 
-- import_tasks: install.yaml
+- name: Deploy MetalLB using Helm and validate rollout
+  ansible.builtin.import_tasks: install.yaml
 
-- import_tasks: configure.yaml
+- name: Set the IP range for MetalLB
+  ansible.builtin.import_tasks: configure.yaml

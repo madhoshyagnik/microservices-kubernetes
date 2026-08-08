@@ -1,6 +1,6 @@
 ---
 - name: Install K3s server
-  shell: |
+  ansible.builtin.shell: |
     curl -sfL https://get.k3s.io | \
     INSTALL_K3S_EXEC="server \
     --node-ip {{ k3s_server_ip }} \
@@ -9,13 +9,13 @@
     sh -
 
 - name: Ensure K3s service is running
-  service:
+  ansible.builtin.service:
     name: k3s
     state: started
     enabled: yes
 
 - name: Wait for Kubernetes API
-  command: kubectl get nodes
+  ansible.builtin.command: kubectl get nodes
   register: api
   retries: 20
   delay: 5

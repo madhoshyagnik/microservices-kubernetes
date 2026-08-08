@@ -1,6 +1,6 @@
 ---
 - name: Wait until all nodes have joined
-  command: kubectl get nodes --no-headers
+  ansible.builtin.command: kubectl get nodes --no-headers
   register: nodes
   retries: 20
   delay: 5
@@ -8,13 +8,13 @@
   changed_when: false
 
 - name: Taint control plane
-  command: >
+  ansible.builtin.command: >
     kubectl taint nodes {{ inventory_hostname }}
     node-role.kubernetes.io/control-plane=true:NoSchedule --overwrite
   changed_when: false
 
 - name: Copy kubeconfig for vagrant user
-  copy:
+  ansible.builtin.copy:
     remote_src: true
     src: /etc/rancher/k3s/k3s.yaml
     dest: /home/vagrant/k3s.yaml
@@ -25,13 +25,13 @@
 - name: Ensure local .kube directory exists
   delegate_to: localhost
   become: false
-  file:
+  ansible.builtin.file:
     path: "{{ lookup('env', 'HOME') }}/.kube"
     state: directory
     mode: "0755"
 
 - name: Fetch kubeconfig to localhost
-  fetch:
+  ansible.builtin.fetch:
     src: /home/vagrant/k3s.yaml
     dest: "{{ lookup('env', 'HOME') }}/.kube/config"
     flat: true
@@ -39,16 +39,16 @@
 - name: Update kubeconfig server address
   delegate_to: localhost
   become: false
-  replace:
+  ansible.builtin.replace:
     path: "{{ lookup('env', 'HOME') }}/.kube/config"
     regexp: '127\.0\.0\.1'
     replace: "{{ k3s_server_ip }}"
 
 - name: Verify cluster nodes
-  command: kubectl get nodes -o wide
+  ansible.builtin.command: kubectl get nodes -o wide
   register: cluster_nodes
   changed_when: false
 
 - name: Display cluster nodes
-  debug:
+  ansible.builtin.debug:
     var: cluster_nodes.stdout_lines

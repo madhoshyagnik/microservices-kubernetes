@@ -1,12 +1,12 @@
-# Inventory for K3s nodes. Shared cluster variables are stored in group_vars/all.yml.
+# Inventory for K3s nodes. Shared variables are stored in group_vars/all.yml.
 all:
   children:
-    control:
+    control_nodes:
       hosts:
         debian1:
           ansible_host: 192.168.56.11
 
-    workers:
+    worker_nodes:
       hosts:
         debian2:
           ansible_host: 192.168.56.12
@@ -19,5 +19,5 @@ all:
 
     k3s:
       children:
-        control:
-        workers:
+        control_nodes:
+        worker_nodes:

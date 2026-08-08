@@ -11,6 +11,8 @@
 | **[Vagrant](https://www.vagrantup.com/)** | A tool for building and managing reproducible virtual machine environments using a declarative `Vagrantfile`. It provisions local VMs (via VirtualBox, libvirt, etc.) that simulate real multi-node infrastructure on a single workstation. |
 | **[Helm](https://helm.sh/)** | The package manager for Kubernetes. Helm charts bundle all the manifests, configs, and defaults needed to deploy complex applications (like the OpenTelemetry demo) into a cluster with a single command. |
 | **[MetalLB](https://metallb.io/)** | A load balancer implementation for bare-metal Kubernetes clusters. It assigns external IP addresses to `LoadBalancer` Services and advertises them on the local network using Layer 2 or BGP modes. |
+| **[Rancher](https://www.rancher.com/)** | Rancher, the open-source multi-cluster orchestration platform, lets operations teams deploy, manage and secure enterprise Kubernetes. |
+| **[KubeVirt](https://kubevirt.io/)** | KubeVirt technology addresses the needs of development teams that have adopted or want to adopt Kubernetes but possess existing Virtual Machine-based workloads that cannot be easily containerized. |
 | **[kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)** | A YAML configuration file that `kubectl` uses to authenticate and connect to a Kubernetes cluster. This playbook automatically retrieves it from the control plane and configures it on the host. |
 | **[Control Plane Tainting](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)** | A Kubernetes mechanism to prevent regular workload pods from being scheduled on control plane nodes. This reserves the control plane for cluster management duties only. |
 
@@ -25,7 +27,7 @@
 | **Portability** | Runs on any machine with VirtualBox and Vagrant — Linux, macOS, Windows | Tied to an AWS account and region |
 | **Production readiness** | Not designed for production; ideal for learning and experimentation | Production-grade managed Kubernetes with built-in HA, IAM integration, and auto-scaling |
 
-> **Bottom line**: This setup is purpose-built for **learning Kubernetes internals hands-on** — understanding how nodes join a cluster, how CNI networking works, how DNS resolution functions, and how automation tools like Ansible tie it all together. Use EKS (or GKE, AKS) when you need a production-grade managed cluster; use this repo when you want to truly understand what those managed services are doing under the hood.
+> **Bottom line**: This setup is purpose-built for **learning Kubernetes internals hands-on** — understanding how nodes join a cluster, how CNI networking works, how DNS resolution functions, and how automation tools like Ansible tie it all together. Use EKS (or GKE, AKS) when you need a production-grade managed cluster; use this repo when you want to truly understand what those managed services are doing under the hood. Have fun with it and feel free to collaborate.
 
 ---
 
@@ -84,12 +86,12 @@ Example inventory:
 ```yaml
 all:
   children:
-    control:
+    control_nodes:
       hosts:
         debian1:
           ansible_host: 192.168.56.11
 
-    workers:
+    worker_nodes:
       hosts:
         debian2:
           ansible_host: 192.168.56.12
@@ -101,8 +103,8 @@ all:
           ansible_host: 192.168.56.15
     k3s:
       children:
-        control:
-        workers:
+        control_nodes:
+        worker_nodes:
 ```
 
 Example `inventory/group_vars/all.yml`:
@@ -110,7 +112,6 @@ Example `inventory/group_vars/all.yml`:
 ```yaml
 ansible_user: vagrant
 ansible_python_interpreter: /usr/bin/python3
-
 k3s_server_ip: 192.168.56.11
 k3s_token: "DkPS01xep_{8"
 ```
@@ -122,7 +123,7 @@ k3s_token: "DkPS01xep_{8"
 Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
 
 ```bash
-ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml --check
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml -CD
 ```
 
 To run and apply the playbook:

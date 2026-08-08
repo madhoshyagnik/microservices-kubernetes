@@ -1,6 +1,6 @@
 ---
 - name: Install K3s agent
-  shell: |
+  ansible.builtin.shell: |
     curl -sfL https://get.k3s.io | \
     INSTALL_K3S_EXEC="agent \
     --server https://{{ k3s_server_ip }}:6443 \
@@ -10,7 +10,7 @@
     sh -s -
 
 - name: Ensure K3s agent service is running
-  service:
+  ansible.builtin.service:
     name: k3s-agent
     state: started
     enabled: yes

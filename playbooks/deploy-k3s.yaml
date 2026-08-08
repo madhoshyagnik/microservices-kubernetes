@@ -9,7 +9,7 @@
         k3s_action: bootstrap
 
 - name: Install K3s Server
-  hosts: control
+  hosts: control_nodes
   become: true
   gather_facts: true
   roles:
@@ -18,7 +18,7 @@
         k3s_action: server
 
 - name: Install K3s Workers
-  hosts: workers
+  hosts: worker_nodes
   become: true
   gather_facts: true
   roles:
@@ -27,7 +27,7 @@
         k3s_action: agent
 
 - name: Configure Cluster
-  hosts: control
+  hosts: control_nodes
   become: true
   gather_facts: true
   roles:

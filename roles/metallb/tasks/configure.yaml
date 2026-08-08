@@ -1,17 +1,17 @@
 # Sets IP range for MetalLB Load Balancer to use
 
 - name: Generate MetalLB configuration
-  template:
+  ansible.builtin.template:
     src: metallb-config.yaml.j2
     dest: /tmp/metallb-config.yaml
 
 - name: Apply MetalLB configuration
-  command: kubectl apply -f /tmp/metallb-config.yaml
+  ansible.builtin.command: kubectl apply -f /tmp/metallb-config.yaml
 
 - name: Verify IPAddressPool
-  command: kubectl get ipaddresspool -n metallb-system
+  ansible.builtin.command: kubectl get ipaddresspool -n metallb-system
   changed_when: false
 
 - name: Verify L2Advertisement
-  command: kubectl get l2advertisement -n metallb-system
+  ansible.builtin.command: kubectl get l2advertisement -n metallb-system
   changed_when: false

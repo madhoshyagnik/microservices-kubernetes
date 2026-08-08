@@ -2,28 +2,28 @@
 # tasks file for k3s
 
 - name: Run bootstrap tasks
-  include_tasks: bootstrap.yml
+  ansible.builtin.include_tasks: bootstrap.yml
   when: k3s_action | default('all') in ['all', 'bootstrap']
 
 - name: Run server tasks
-  include_tasks: server.yml
+  ansible.builtin.include_tasks: server.yml
   when:
     - k3s_action | default('all') in ['all', 'server']
-    - inventory_hostname in groups['control'] | default([])
+    - inventory_hostname in groups['control_nodes'] | default([])
 
 - name: Run agent tasks
-  include_tasks: agent.yml
+  ansible.builtin.include_tasks: agent.yml
   when:
     - k3s_action | default('all') in ['all', 'agent']
-    - inventory_hostname in groups['workers'] | default([])
+    - inventory_hostname in groups['worker_nodes'] | default([])
 
 - name: Run configure tasks
-  include_tasks: configure.yml
+  ansible.builtin.include_tasks: configure.yml
   when:
     - k3s_action | default('all') in ['all', 'configure']
-    - inventory_hostname in groups['control'] | default([])
+    - inventory_hostname in groups['control_nodes'] | default([])
 
 - name: Run uninstall tasks
-  include_tasks: uninstall.yml
+  ansible.builtin.include_tasks: uninstall.yml
   when: k3s_action | default('all') == 'uninstall'
 
