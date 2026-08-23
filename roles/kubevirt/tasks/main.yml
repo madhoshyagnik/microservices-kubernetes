@@ -11,7 +11,10 @@
     kubectl -n kubevirt patch kubevirt kubevirt --type=merge --patch '{"spec":{"configuration":{"developerConfiguration":{"useEmulation":true}}}}'
   changed_when: false
 
-
+- name: Wait for KubeVirt to be deployed
+  ansible.builtin.shell: |
+    kubectl wait -n kubevirt kubevirt.kubevirt.io/kubevirt --for=condition=Available --timeout=900s
+  changed_when: false
 
 - name: Install CDI
   ansible.builtin.shell: |
