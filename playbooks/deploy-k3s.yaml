@@ -14,4 +14,3 @@
     - role: ../roles/metallb
     - role: ../roles/rancher
     - role: ../roles/kubevirt
-    - role: ../roles/opentelemetry
