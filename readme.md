@@ -2,14 +2,14 @@
 
 This repository provisions a fully functional, multi-node K3s Kubernetes cluster on local Vagrant VMs using Ansible, and automatically deploys essential infrastructure tools like **MetalLB**, **Rancher**, and **KubeVirt**.
 
-## 🚀 Features
+## Features
 
 - **Automated K3s Cluster**: 1 Control Plane, 4 Worker Nodes.
 - **MetalLB**: Provides external LoadBalancer IPs for services.
 - **Rancher**: Web UI for multi-cluster management.
 - **KubeVirt**: Run Virtual Machines natively alongside containers.
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 - [Vagrant](https://www.vagrantup.com/) & VirtualBox (or preferred provider)
 - [Ansible](https://docs.ansible.com/)
@@ -17,7 +17,7 @@ This repository provisions a fully functional, multi-node K3s Kubernetes cluster
 
 ---
 
-## 🏃‍♂️ Getting Started
+## Getting Started
 
 ### 1. Bring up the Virtual Machines
 This provisions the VMs as defined in the `Vagrantfile`.
@@ -37,18 +37,18 @@ ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 
 ---
 
-## 🎯 Accessing the Applications
+## Accessing the Applications
 
 Once the playbook completes, wait a few minutes for all pods to become ready (`kubectl get pods -A -w`).
 
-### 🐮 Rancher
+### Rancher
 Rancher is exposed via a MetalLB LoadBalancer IP (usually `192.168.56.x`). Check the exact IP:
 ```bash
 kubectl get svc rancher -n cattle-system
 ```
 Access the IP in your browser via `https://<RANCHER_IP>`. (Default bootstrap password: `admin`).
 
-### 📦 KubeVirt Manager
+### KubeVirt Manager
 Manage your KubeVirt VMs from a web interface. Check the IP:
 ```bash
 kubectl get svc kubevirt-manager -n kubevirt-manager
@@ -57,7 +57,7 @@ Access via `http://<KUBEVIRT_MANAGER_IP>`.
 
 ---
 
-## 🔭 Manual Deployment: OpenTelemetry Demo
+## Manual Deployment: OpenTelemetry Demo
 
 To deploy the OpenTelemetry Demo manually to your cluster, run the following Helm commands. 
 
@@ -85,7 +85,7 @@ Then access it via `http://<EXTERNAL_IP>:8080`.
 
 ---
 
-## 🧹 Cleanup
+## Cleanup
 
 To completely remove K3s and all installed components from the VMs without destroying the VMs themselves:
 
@@ -98,6 +98,6 @@ If you want to destroy the VMs entirely:
 vagrant destroy -f
 ```
 
-## 📖 Architecture & Details
+## Architecture & Details
 
 For deeper insights into the configuration, check out the [Documentation folder](./Documentation), which contains the manual steps that were converted into this automated deployment, and explanations of Kubernetes concepts.
