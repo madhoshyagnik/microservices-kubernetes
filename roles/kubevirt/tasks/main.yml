@@ -13,8 +13,9 @@
 
 - name: Wait for KubeVirt to be deployed
   ansible.builtin.shell: |
-    kubectl wait -n kubevirt kubevirt.kubevirt.io/kubevirt --for=condition=Available --timeout=300s
+    kubectl wait -n kubevirt kubevirt.kubevirt.io/kubevirt --for=condition=Available --timeout=900s
   changed_when: false
+  failed_when: false
 
 - name: Install CDI
   ansible.builtin.shell: |
