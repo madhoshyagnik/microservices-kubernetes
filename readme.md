@@ -46,7 +46,7 @@ graph TD
     User -->|Access via LoadBalancer IPs| MetalLB
 ```
 
-The following diagram visualizes the high-level architecture of the microservices and Kubernetes deployment managed by this repository. It illustrates the infrastructure provisioned by Vagrant, configured via Ansible, and the core services running within the K3s cluster.
+The above diagram visualizes the high-level architecture of the microservices and Kubernetes deployment managed by this repository. It illustrates the infrastructure provisioned by Vagrant, configured via Ansible, and the core services running within the K3s cluster.
 
 ---
 
