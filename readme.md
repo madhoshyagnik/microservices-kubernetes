@@ -30,7 +30,7 @@ vagrant up
 The Ansible playbook will install K3s, configure the cluster, copy the kubeconfig to your host, and automatically install the addons (MetalLB, Rancher, and KubeVirt).
 
 ```bash
-ansible-playbook playbooks/deploy-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
 *Note: The playbook is idempotent. You can safely re-run it if something fails.*
@@ -90,7 +90,7 @@ Then access it via `http://<EXTERNAL_IP>:8080`.
 To completely remove K3s and all installed components from the VMs without destroying the VMs themselves:
 
 ```bash
-ansible-playbook playbooks/uninstall-k3s.yaml
+ansible-playbook -i inventory/inventory.yaml playbooks/uninstall-k3s.yaml
 ```
 
 If you want to destroy the VMs entirely:
