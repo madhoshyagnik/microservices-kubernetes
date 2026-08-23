@@ -9,7 +9,7 @@
   * `debian2-5` - Workers
 * Load Balancer: **MetalLB**
 * Ingress: **Traefik** (default K3s ingress)
-* Domain: `madhoshyagnik.space` (Cloudflare)
+* Domain: `madhoshyagnik.com` (Cloudflare)
 * Tunnel: **Cloudflare Remote Managed Tunnel**
 * TLS: Rancher-generated certificates with Cloudflare terminating public TLS.
 
@@ -87,7 +87,7 @@ Instead of installing from the remote repository:
 ```bash
 helm install rancher ./rancher \
   --namespace cattle-system \
-  --set hostname=rancher.madhoshyagnik.space \
+  --set hostname=rancher.madhoshyagnik.com \
   --set tls=external \
   --set bootstrapPassword=admin
 ```
@@ -107,6 +107,30 @@ avoided Rancher attempting to manage public TLS certificates itself.
 # 6. Expose Rancher using MetalLB
 
 The Rancher Service was converted from `ClusterIP` to `LoadBalancer` so MetalLB could advertise an external VIP.
+
+To do this, patch the service and ensure its selector matches the Rancher pods:
+
+```bash
+kubectl patch svc rancher -n cattle-system -p '{"spec":{"type":"LoadBalancer", "selector":{"app":"rancher"}}}'
+```
+
+---
+
+# 7. Install Rancher Dashboard Extension
+
+To enhance the Rancher UI with KubeVirt management, install the corresponding dashboard extension via Helm.
+
+Ensure the target namespace exists:
+```bash
+kubectl create namespace cattle-ui-plugin-system
+```
+
+Install the **KubeVirt extension**:
+```bash
+helm install kubevirt-dashboard-extension oci://registry.suse.com/edge/charts/kubevirt-dashboard-extension --version 303.0.2+up1.3.2 --namespace cattle-ui-plugin-system
+```
+
+> **Note:** After an extension is installed, the Rancher Dashboard UI needs to be reloaded in your browser to display the new plugins.
 
 ---
 
@@ -218,7 +242,7 @@ https://192.168.56.202
 Hostname:
 
 ```
-rancher.madhoshyagnik.space
+rancher.madhoshyagnik.com
 ```
 
 No local `cloudflared` configuration was required.
@@ -228,7 +252,7 @@ After Rancher's Service selector was corrected, Cloudflare successfully proxied 
 Verification:
 
 ```bash
-curl -vk https://rancher.madhoshyagnik.space
+curl -vk https://rancher.madhoshyagnik.com
 ```
 
 Returned:
@@ -236,7 +260,7 @@ Returned:
 ```
 HTTP/2 302
 server: cloudflare
-location: https://rancher.madhoshyagnik.space/
+location: https://rancher.madhoshyagnik.com/
 ```
 
 confirming:
