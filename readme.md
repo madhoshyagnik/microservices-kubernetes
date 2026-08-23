@@ -1,340 +1,85 @@
-# Provisioning the K3s Cluster Using Ansible
+# Microservices & Kubernetes Learning Lab
 
-## Key Concepts
+Welcome to the automated K3s cluster deployment lab! This repository provisions a fully functional, multi-node K3s Kubernetes cluster on local Vagrant VMs using Ansible, and automatically deploys essential tools like **MetalLB**, **Rancher**, **KubeVirt**, and the **OpenTelemetry Demo**.
 
-| Term | What It Is |
-|------|------------|
-| **[K3s](https://k3s.io/)** | A lightweight, CNCF-certified Kubernetes distribution by Rancher. It ships as a single binary, replaces etcd with SQLite by default, and bundles essential components (Flannel, CoreDNS, Traefik), making it ideal for edge, IoT, and local development clusters. |
-| **[Flannel](https://github.com/flannel-io/flannel)** | The default Container Network Interface (CNI) plugin bundled with K3s. It creates a virtual overlay network so that every pod in the cluster gets its own IP address and can communicate with pods on other nodes, regardless of the underlying host network. |
-| **[CoreDNS](https://coredns.io/)** | The cluster DNS server that ships with K3s. It allows pods to discover services by name (e.g., `my-service.default.svc.cluster.local`) instead of hard-coding IP addresses, which is essential for inter-service communication. |
-| **[Ansible](https://docs.ansible.com/)** | An agentless infrastructure automation tool. Playbooks (written in YAML) define the desired state of your servers, and Ansible connects over SSH to enforce that state — no agent installation required on target nodes. |
-| **[Vagrant](https://www.vagrantup.com/)** | A tool for building and managing reproducible virtual machine environments using a declarative `Vagrantfile`. It provisions local VMs (via VirtualBox, libvirt, etc.) that simulate real multi-node infrastructure on a single workstation. |
-| **[Helm](https://helm.sh/)** | The package manager for Kubernetes. Helm charts bundle all the manifests, configs, and defaults needed to deploy complex applications (like the OpenTelemetry demo) into a cluster with a single command. |
-| **[MetalLB](https://metallb.io/)** | A load balancer implementation for bare-metal Kubernetes clusters. It assigns external IP addresses to `LoadBalancer` Services and advertises them on the local network using Layer 2 or BGP modes. |
-| **[Rancher](https://www.rancher.com/)** | Rancher, the open-source multi-cluster orchestration platform, lets operations teams deploy, manage and secure enterprise Kubernetes. |
-| **[KubeVirt](https://kubevirt.io/)** | KubeVirt technology addresses the needs of development teams that have adopted or want to adopt Kubernetes but possess existing Virtual Machine-based workloads that cannot be easily containerized. |
-| **[kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)** | A YAML configuration file that `kubectl` uses to authenticate and connect to a Kubernetes cluster. This playbook automatically retrieves it from the control plane and configures it on the host. |
-| **[Control Plane Tainting](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/)** | A Kubernetes mechanism to prevent regular workload pods from being scheduled on control plane nodes. This reserves the control plane for cluster management duties only. |
+## 🚀 Features
 
-## Why Local K3s Instead of AWS EKS?
+- **Automated K3s Cluster**: 1 Control Plane, 4 Worker Nodes.
+- **MetalLB**: Provides external LoadBalancer IPs for services.
+- **Rancher**: Web UI for multi-cluster management.
+- **KubeVirt**: Run Virtual Machines natively alongside containers.
+- **OpenTelemetry Demo**: A comprehensive microservices application with observability tools (Grafana, Jaeger, Prometheus).
 
-| | Local K3s + Vagrant | AWS EKS |
-|---|---|---|
-| **Cost** | Free — runs entirely on your workstation | EKS control plane costs ~$0.10/hr (~$73/mo), plus EC2 instance charges for worker nodes |
-| **Learning depth** | You provision the cluster from scratch — networking, DNS, node joining, tainting — building real operational understanding | Much of the infrastructure is abstracted away; you interact with a managed API |
-| **Iteration speed** | `vagrant up` + `ansible-playbook` gives you a full cluster in minutes, tear it down and rebuild in seconds | Cluster creation takes 10–15 minutes; teardown is slower and may incur costs if forgotten |
-| **Offline development** | Works entirely offline once dependencies are cached | Requires an internet connection and AWS credentials at all times |
-| **Portability** | Runs on any machine with VirtualBox and Vagrant — Linux, macOS, Windows | Tied to an AWS account and region |
-| **Production readiness** | Not designed for production; ideal for learning and experimentation | Production-grade managed Kubernetes with built-in HA, IAM integration, and auto-scaling |
+## 🛠️ Prerequisites
 
-> **Bottom line**: This setup is purpose-built for **learning Kubernetes internals hands-on** — understanding how nodes join a cluster, how CNI networking works, how DNS resolution functions, and how automation tools like Ansible tie it all together. Use EKS (or GKE, AKS) when you need a production-grade managed cluster; use this repo when you want to truly understand what those managed services are doing under the hood. Have fun with it and feel free to collaborate.
+- [Vagrant](https://www.vagrantup.com/) & VirtualBox (or preferred provider)
+- [Ansible](https://docs.ansible.com/)
+- `kubectl` & `helm` installed on your host machine
 
 ---
 
-> [!IMPORTANT]
-> **Troubleshooting: Multi-Node Flannel Networking / Cluster DNS Issues**
-> * **Issue**: In Vagrant-based multi-node setups, Flannel CNI defaults to binding on the `eth0` NAT interface, causing all nodes to share the same tunnel IP (`10.0.2.15`). This breaks cross-node pod communication, causing cluster DNS (`coredns`) and services to fail.
-> * **Resolution**: Configured K3s on both the control plane and agents to bind Flannel explicitly to the private network interface (`eth1`) by passing the `--flannel-iface eth1` argument.
+## 🏃‍♂️ Getting Started
 
-This repository includes an Ansible playbook that automates the complete K3s cluster provisioning process.
-
-The playbook performs the following tasks:
-
-- Updates the package cache
-- Upgrades installed packages
-- Installs required dependencies
-- Reboots nodes if required
-- Installs the K3s server
-- Joins worker nodes to the cluster
-- Waits for all nodes to become Ready
-- Taints the control plane
-- Retrieves the kubeconfig to the host
-- Configures the local `kubectl`
-
-> [!NOTE]
-> The associated `Vagrantfile` is configured by default to provision heavy nodes (8 GB RAM / 4 CPUs for control plane, and 4 GB RAM / 2 CPUs for each worker) to support heavy workloads like the OpenTelemetry demo. If you have limited host resources, please adjust the CPU and memory allocations inside the Vagrantfile.
-
----
-
-## Directory Structure
-
-```text
-.
-├── inventory/inventory.yaml
-├── inventory/group_vars/all.yaml
-├── playbooks/deploy-k3s.yaml    (Deploys the K3s cluster)
-├── playbooks/uninstall-k3s.yaml (Uninstalls K3s and resets state)
-├── Documentation/
-│   └── readme-manual-k3s-deployment.md (Manual VM setup guide)
-│   └── readme-manual-k3s-deployment.md 
-│   └── knowledge-docs/additional-understanding-doc.md
-└── roles/
-    └── k3s/     (Modular Ansible role for K3s tasks)
-    └── metallb/ (Modular Ansible role for K3s tasks)
-```
-
----
-
-## Inventory
-
-The inventory defines the control plane and worker nodes, while shared variables are stored separately in `group_vars/all.yml`.
-
-Update `inventory/inventory.yaml` with your cluster-specific values, and keep the inventory focused on node addresses.
-
-Example inventory:
-
-```yaml
-all:
-  children:
-    control_nodes:
-      hosts:
-        debian1:
-          ansible_host: 192.168.56.11
-
-    worker_nodes:
-      hosts:
-        debian2:
-          ansible_host: 192.168.56.12
-        debian3:
-          ansible_host: 192.168.56.13
-        debian4:
-          ansible_host: 192.168.56.14
-        debian5:
-          ansible_host: 192.168.56.15
-    k3s:
-      children:
-        control_nodes:
-        worker_nodes:
-```
-
-Example `inventory/group_vars/all.yml`:
-
-```yaml
-ansible_user: vagrant
-ansible_python_interpreter: /usr/bin/python3
-k3s_server_ip: 192.168.56.11
-k3s_token: "DkPS01xep_{8"
-```
-
----
-
-## Run the Playbook
-
-Before applying the changes, you can perform a dry run (check mode) to preview what tasks Ansible will execute:
+### 1. Bring up the Virtual Machines
+This provisions the VMs as defined in the `Vagrantfile`.
 
 ```bash
-ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml -CD
+vagrant up
 ```
 
-To run and apply the playbook:
+### 2. Deploy the Cluster & Addons
+The Ansible playbook will install K3s, configure the cluster, copy the kubeconfig to your host, and install all addons (MetalLB, Rancher, KubeVirt, and the OpenTelemetry Demo).
 
 ```bash
 ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
 ```
 
----
-
-## What the Playbook Does
-
-### Bootstrap
-
-- Updates the package cache
-- Upgrades installed packages
-- Installs:
-  - curl
-  - dnsutils
-  - telnet
-  - net-tools
-  - wget
-  - git
-  - vim
-  - htop
-  - jq
-- Reboots hosts if required
-
-### Control Plane
-
-- Installs the K3s server
-- Enables the K3s service
-- Waits for the Kubernetes API server
-
-### Worker Nodes
-
-- Installs the K3s agent
-- Joins each worker to the cluster
-- Enables the K3s agent service
-
-### Cluster Configuration
-
-- Waits until all worker nodes join the cluster
-- Taints the control plane
-- Copies the kubeconfig from the control plane
-- Fetches the kubeconfig to the host
-- Updates the API server address
-- Verifies the cluster
+*Note: The playbook is idempotent. You can safely re-run it if something fails.*
 
 ---
 
-## Expected Output
+## 🎯 Accessing the Applications
 
-Successful execution should display all nodes in the **Ready** state.
+Once the playbook completes, you can access your deployed services. Wait a few minutes for all pods to become ready (`kubectl get pods -A -w`).
 
-Example:
-
-```text
-NAME      STATUS   ROLES           AGE   VERSION
-debian1   Ready    control-plane   2m    v1.36.2+k3s1
-debian2   Ready    <none>          1m    v1.36.2+k3s1
-debian3   Ready    <none>          1m    v1.36.2+k3s1
-debian4   Ready    <none>          1m    v1.36.2+k3s1
-debian5   Ready    <none>          1m    v1.36.2+k3s1
-```
-
----
-
-## Verify the Cluster
-
+### 🐮 Rancher
+Rancher is exposed via a MetalLB LoadBalancer IP (usually `192.168.56.x`). Check the exact IP:
 ```bash
-kubectl get nodes -o wide
-
-kubectl get pods -A
-
-kubectl cluster-info
+kubectl get svc rancher -n cattle-system
 ```
+Access the IP in your browser via `https://<RANCHER_IP>`. (Default bootstrap password: `admin`).
 
----
-
-## Re-running the Playbook
-
-The playbook is idempotent.
-
-Re-running it will:
-
-- Skip K3s installation if already installed
-- Ensure required packages are installed
-- Ensure services are running
-- Refresh the local kubeconfig
-- Reapply the control-plane taint if necessary
-
+### 📦 KubeVirt Manager
+Manage your KubeVirt VMs from a web interface. Check the IP:
 ```bash
-ansible-playbook -i inventory/inventory.yaml playbooks/deploy-k3s.yaml
+kubectl get svc kubevirt-manager -n kubevirt-manager
 ```
+Access via `http://<KUBEVIRT_MANAGER_IP>`.
+
+### 🔭 OpenTelemetry Demo
+The demo frontend is exposed as a LoadBalancer. Check the IP:
+```bash
+kubectl get svc my-otel-demo-frontendproxy -n default
+```
+Access via `http://<OTEL_IP>:8080`.
+
+*(Note: The Prometheus crash issue in local environments has been fixed by disabling persistent storage for Prometheus in the automated playbook!)*
 
 ---
 
-## Uninstalling / Reverting K3s
+## 🧹 Cleanup
 
-To automatically uninstall K3s from all cluster nodes, clean up configuration folders, and reboot the machines, run the uninstall playbook on the host:
+To completely remove K3s and all installed components from the VMs without destroying the VMs themselves:
 
 ```bash
 ansible-playbook -i inventory/inventory.yaml playbooks/uninstall-k3s.yaml
 ```
 
-### Manual Uninstall (Fallback)
-
-If you prefer to uninstall manually on each node:
-
-**Control Plane:**
+If you want to destroy the VMs entirely:
 ```bash
-sudo /usr/local/bin/k3s-uninstall.sh
+vagrant destroy -f
 ```
 
-**Worker Nodes:**
-```bash
-sudo /usr/local/bin/k3s-agent-uninstall.sh
-```
+## 📖 Architecture & Details
 
-**Cleanup & Reset:**
-```bash
-sudo rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet /home/vagrant/k3s.yaml
-sudo reboot
-```
-
-
----
-
-## Deploying the OpenTelemetry Demo
-
-Once your cluster is fully provisioned and healthy, you can deploy the OpenTelemetry Demo:
-
-1. **Add the OpenTelemetry Helm repository:**
-   ```bash
-   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-   helm repo update
-   ```
-
-2. **Install the OpenTelemetry Demo chart:**
-   ```bash
-   helm install my-otel-demo open-telemetry/opentelemetry-demo
-   ```
-
-   > **Note**: If the Grafana pod crashloops with `OOMKilled` (Exit Code 137) during plugin extraction, or fails with permission errors updating bundled plugins (e.g. `elasticsearch`), increase its memory limits and enable the shadowed plugins volume:
-   > ```bash
-   > helm upgrade my-otel-demo open-telemetry/opentelemetry-demo --reuse-values \
-   >   --set grafana.resources.limits.memory=512Mi \
-   >   --set grafana.resources.requests.memory=256Mi \
-   >   --set grafana.shadowBundledPlugins=true
-   > ```
-
-3. **Verify the installation:**
-   ```bash
-   kubectl get pods -w
-   ```
-
-4. **Access the demo application using port forwarding, or expose it using a MetalLB `LoadBalancer` (if installed manually or provisioned by the Ansible playbook):**
-   ```bash
-   kubectl --namespace default port-forward svc/frontend-proxy 8080:8080
-   ```
-   Once running, open [http://localhost:8080](http://localhost:8080) in your browser to access the OpenTelemetry demo frontend.
-
-
-   **Using the MetalLB LoadBalancer:**
-
-   Patch the service:
-
-   ```bash
-   kubectl patch svc frontend-proxy \
-     -p '{"spec":{"type":"LoadBalancer"}}'
-   ```
-
-   Verify the assigned external IP:
-
-   ```bash
-   kubectl get svc frontend-proxy
-   ```
-
-   Example:
-
-   ```text
-   NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
-   frontend-proxy   LoadBalancer   10.43.53.112    192.168.56.201   8080:32238/TCP
-   ```
-
-   Access the application:
-
-   ```text
-   http://192.168.56.201:8080
-   ```
-
----
-
-## MetalLB
-
-MetalLB is automatically installed and configured by the Ansible playbook during cluster provisioning.
-
-The playbook:
-- Installs MetalLB using the official Helm chart.
-- Creates the `IPAddressPool` and `L2Advertisement` resources.
-- Configures the IP address pool defined by `metallb_pool` in `roles/metallb/defaults/main.yml`.
-
-By default, the following range is used:
-
-```text
-192.168.56.200-192.168.56.220
-```
-
-If you need to change the available LoadBalancer IP range, update the `metallb_pool` variable and rerun the MetalLB playbook.
-
-For detailed MetalLB installation and configuration instructions, refer to `Documentation/readme-manual-k3s-deployment.md`.
-
----
+For deeper insights into the configuration, check out the [Documentation folder](./Documentation), which contains the manual steps that were converted into this automated deployment, and explanations of Kubernetes concepts.

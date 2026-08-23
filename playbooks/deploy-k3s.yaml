@@ -1,43 +1,17 @@
 ---
-- name: Bootstrap K3s Cluster
+- name: Deploy K3s Cluster
   hosts: k3s
   become: true
   gather_facts: true
   roles:
-    - role: ./roles/k3s
-      vars:
-        k3s_action: bootstrap
+    - role: ../roles/k3s
 
-- name: Install K3s Server
-  hosts: control_nodes
-  become: true
-  gather_facts: true
-  roles:
-    - role: ./roles/k3s
-      vars:
-        k3s_action: server
-
-- name: Install K3s Workers
-  hosts: worker_nodes
-  become: true
-  gather_facts: true
-  roles:
-    - role: ./roles/k3s
-      vars:
-        k3s_action: agent
-
-- name: Configure Cluster
-  hosts: control_nodes
-  become: true
-  gather_facts: true
-  roles:
-    - role: ./roles/k3s
-      vars:
-        k3s_action: configure
-
-- name: Install MetalLB
+- name: Install Cluster Addons
   hosts: localhost
   connection: local
   gather_facts: false
   roles:
-    - role: ./roles/metallb
+    - role: ../roles/metallb
+    - role: ../roles/rancher
+    - role: ../roles/kubevirt
+    - role: ../roles/opentelemetry

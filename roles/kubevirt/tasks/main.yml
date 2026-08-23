@@ -1,0 +1,34 @@
+---
+- name: Install KubeVirt Operator
+  ansible.builtin.shell: |
+    export VERSION=$(curl -s https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+    kubectl apply -f "https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt-operator.yaml"
+    kubectl apply -f "https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt-cr.yaml"
+  changed_when: false
+
+- name: Enable Software Emulation
+  ansible.builtin.shell: |
+    kubectl -n kubevirt patch kubevirt kubevirt --type=merge --patch '{"spec":{"configuration":{"developerConfiguration":{"useEmulation":true}}}}'
+  changed_when: false
+
+- name: Wait for KubeVirt to be deployed
+  ansible.builtin.shell: |
+    kubectl wait -n kubevirt kubevirt.kubevirt.io/kubevirt --for=condition=Ready --timeout=300s
+  changed_when: false
+
+- name: Install CDI
+  ansible.builtin.shell: |
+    export CDI_VERSION=$(curl -s https://api.github.com/repos/kubevirt/containerized-data-importer/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    kubectl apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-operator.yaml"
+    kubectl apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-cr.yaml"
+  changed_when: false
+
+- name: Install KubeVirt Manager
+  ansible.builtin.shell: |
+    kubectl apply -f https://github.com/kubevirt-manager/kubevirt-manager/releases/download/v1.5.4/bundled-v1.5.4.yaml
+  changed_when: false
+
+- name: Expose KubeVirt Manager as LoadBalancer
+  ansible.builtin.shell: |
+    kubectl patch svc kubevirt-manager -n kubevirt-manager -p '{"spec":{"type":"LoadBalancer"}}'
+  changed_when: false
