@@ -18,7 +18,7 @@
 
 - name: Install CDI
   ansible.builtin.shell: |
-    export CDI_VERSION=$(curl -s https://api.github.com/repos/kubevirt/containerized-data-importer/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    export CDI_VERSION=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/kubevirt/containerized-data-importer/releases/latest | grep -o '[^/]*$')
     kubectl apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-operator.yaml"
     kubectl apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-cr.yaml"
   changed_when: false
