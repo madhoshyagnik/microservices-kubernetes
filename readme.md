@@ -1,3 +1,55 @@
+```mermaid
+graph TD
+    User([User])
+
+    subgraph Host Machine
+        Ansible[Ansible Playbooks]
+        Vagrant[Vagrant]
+        Helm[Helm]
+    end
+
+    subgraph "Vagrant VMs (K3s Kubernetes Cluster)"
+        direction TB
+        CP(Control Plane Node)
+        W1(Worker Node 1)
+        W2(Worker Node 2)
+        W3(Worker Node 3)
+        W4(Worker Node 4)
+
+        CP --- W1 & W2 & W3 & W4
+
+        subgraph Cluster Services
+            MetalLB[MetalLB LoadBalancer]
+            Rancher[Rancher]
+            KubeVirt[KubeVirt]
+        end
+
+        subgraph Workloads
+            OTel[OpenTelemetry Demo]
+        end
+    end
+
+    Vagrant -->|Provisions| CP
+    Vagrant -->|Provisions| W1
+    Vagrant -->|Provisions| W2
+    Vagrant -->|Provisions| W3
+    Vagrant -->|Provisions| W4
+
+    Ansible -->|Deploys K3s & Services| CP
+
+    Helm -->|Manually Deploys| OTel
+
+    MetalLB -.->|Exposes Services| Rancher
+    MetalLB -.->|Exposes Services| KubeVirt
+    MetalLB -.->|Exposes Services| OTel
+
+    User -->|Access via LoadBalancer IPs| MetalLB
+```
+
+The above diagram visualizes the high-level architecture of the microservices and Kubernetes deployment managed by this repository. It illustrates the infrastructure provisioned by Vagrant, configured via Ansible, and the core services running within the K3s cluster.
+
+---
+
 # Microservices & Kubernetes Deployment
 
 This repository provisions a fully functional, multi-node K3s Kubernetes cluster on local Vagrant VMs using Ansible, and automatically deploys essential infrastructure tools like **MetalLB**, **Rancher**, and **KubeVirt**.
