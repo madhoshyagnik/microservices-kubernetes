@@ -1,6 +1,6 @@
-# Microservices & Kubernetes Learning Lab
+# Microservices & Kubernetes Deployment
 
-Welcome to the automated K3s cluster deployment lab! This repository provisions a fully functional, multi-node K3s Kubernetes cluster on local Vagrant VMs using Ansible, and automatically deploys essential tools like **MetalLB**, **Rancher**, and **KubeVirt**.
+This repository provisions a fully functional, multi-node K3s Kubernetes cluster on local Vagrant VMs using Ansible, and automatically deploys essential infrastructure tools like **MetalLB**, **Rancher**, and **KubeVirt**.
 
 ## 🚀 Features
 
