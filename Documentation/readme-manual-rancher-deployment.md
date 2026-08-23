@@ -9,7 +9,7 @@
   * `debian2-5` - Workers
 * Load Balancer: **MetalLB**
 * Ingress: **Traefik** (default K3s ingress)
-* Domain: `madhoshyagnik.space` (Cloudflare)
+* Domain: `madhoshyagnik.com` (Cloudflare)
 * Tunnel: **Cloudflare Remote Managed Tunnel**
 * TLS: Rancher-generated certificates with Cloudflare terminating public TLS.
 
@@ -87,7 +87,7 @@ Instead of installing from the remote repository:
 ```bash
 helm install rancher ./rancher \
   --namespace cattle-system \
-  --set hostname=rancher.madhoshyagnik.space \
+  --set hostname=rancher.madhoshyagnik.com \
   --set tls=external \
   --set bootstrapPassword=admin
 ```
@@ -242,7 +242,7 @@ https://192.168.56.202
 Hostname:
 
 ```
-rancher.madhoshyagnik.space
+rancher.madhoshyagnik.com
 ```
 
 No local `cloudflared` configuration was required.
@@ -252,7 +252,7 @@ After Rancher's Service selector was corrected, Cloudflare successfully proxied 
 Verification:
 
 ```bash
-curl -vk https://rancher.madhoshyagnik.space
+curl -vk https://rancher.madhoshyagnik.com
 ```
 
 Returned:
@@ -260,7 +260,7 @@ Returned:
 ```
 HTTP/2 302
 server: cloudflare
-location: https://rancher.madhoshyagnik.space/
+location: https://rancher.madhoshyagnik.com/
 ```
 
 confirming:
