@@ -108,6 +108,12 @@ avoided Rancher attempting to manage public TLS certificates itself.
 
 The Rancher Service was converted from `ClusterIP` to `LoadBalancer` so MetalLB could advertise an external VIP.
 
+To do this, patch the service and ensure its selector matches the Rancher pods:
+
+```bash
+kubectl patch svc rancher -n cattle-system -p '{"spec":{"type":"LoadBalancer", "selector":{"app":"rancher"}}}'
+```
+
 ---
 
 # 7. Install Rancher Dashboard Extension
