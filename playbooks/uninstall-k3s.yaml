@@ -3,7 +3,8 @@
   hosts: k3s
   become: true
   gather_facts: true
-  roles:
-    - role: ./roles/k3s
-      vars:
-        k3s_action: uninstall
+  tasks:
+    - name: Run uninstall tasks
+      ansible.builtin.include_role:
+        name: ../roles/k3s
+        tasks_from: uninstall.yml
