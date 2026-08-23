@@ -110,9 +110,9 @@ The Rancher Service was converted from `ClusterIP` to `LoadBalancer` so MetalLB 
 
 ---
 
-# 7. Install Rancher Dashboard Extensions
+# 7. Install Rancher Dashboard Extension
 
-To enhance the Rancher UI with KubeVirt and Akri management, install the corresponding dashboard extensions via Helm.
+To enhance the Rancher UI with KubeVirt management, install the corresponding dashboard extension via Helm.
 
 Ensure the target namespace exists:
 ```bash
@@ -122,11 +122,6 @@ kubectl create namespace cattle-ui-plugin-system
 Install the **KubeVirt extension**:
 ```bash
 helm install kubevirt-dashboard-extension oci://registry.suse.com/edge/charts/kubevirt-dashboard-extension --version 303.0.2+up1.3.2 --namespace cattle-ui-plugin-system
-```
-
-Install the **Akri extension**:
-```bash
-helm install akri-dashboard-extension oci://registry.suse.com/edge/charts/akri-dashboard-extension --version 303.0.2+up1.3.1 --namespace cattle-ui-plugin-system
 ```
 
 > **Note:** After an extension is installed, the Rancher Dashboard UI needs to be reloaded in your browser to display the new plugins.
