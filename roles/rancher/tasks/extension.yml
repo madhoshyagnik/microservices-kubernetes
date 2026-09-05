@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Install Rancher KubeVirt Dashboard Extension
+
+- name: Ensure target namespace exists for extension
+  ansible.builtin.command: >
+    kubectl create namespace {{ kubevirt_extension_namespace }}
+  register: ns_create
+  failed_when: false
+  changed_when: ns_create.rc == 0
+
+- name: Install KubeVirt dashboard extension via Helm
+  ansible.builtin.command: >
+    helm upgrade --install kubevirt-dashboard-extension
+    oci://registry.suse.com/edge/charts/kubevirt-dashboard-extension
+    --version {{ kubevirt_extension_version }}
+    --namespace {{ kubevirt_extension_namespace }}
+  changed_when: true

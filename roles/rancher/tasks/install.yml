@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Install Rancher using Helm and configure LoadBalancer service.
+
+- name: Add Rancher Helm repository
+  ansible.builtin.command: >
+    helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+  changed_when: false
+
+- name: Update Helm repositories
+  ansible.builtin.command: helm repo update
+  changed_when: false
+
+- name: Install Rancher via Helm
+  ansible.builtin.command: >
+    helm upgrade --install rancher rancher-stable/rancher
+    --namespace {{ rancher_namespace }}
+    --create-namespace
+    --set hostname={{ rancher_hostname }}
+    --set bootstrapPassword={{ rancher_bootstrap_password }}
+    --set replicas={{ rancher_replicas }}
+    --set tls={{ rancher_tls }}
+
+- name: Wait for Rancher deployment rollout
+  ansible.builtin.command: >
+    kubectl rollout status deployment/rancher
+    --namespace {{ rancher_namespace }}
+    --timeout=300s
+  register: rancher_rollout
+  retries: 5
+  delay: 10
+  until: rancher_rollout.rc == 0
+  changed_when: false
+
+- name: Expose Rancher via LoadBalancer with correct selector
+  ansible.builtin.command: >
+    kubectl patch svc rancher -n {{ rancher_namespace }} -p '{"spec":{"type":"LoadBalancer", "selector":{"app":"rancher"}}}'
+  changed_when: true
+
+- name: Verify Rancher Endpoints
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - get
+      - endpoints
+      - rancher
+      - --namespace
+      - "{{ rancher_namespace }}"
+      - -o
+      - jsonpath={.subsets[0].addresses[0].ip}
+  register: rancher_endpoints
+  retries: 10
+  delay: 5
+  until: rancher_endpoints.stdout | length > 0
+  changed_when: false

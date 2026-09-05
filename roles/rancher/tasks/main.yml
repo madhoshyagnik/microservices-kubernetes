@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Verify host-local prerequisites (kubectl, helm, kubeconfig, cluster-connectivity)
+  ansible.builtin.import_tasks: preflight.yml
+
+- name: Install cert-manager prerequisite for Rancher
+  ansible.builtin.import_tasks: cert_manager.yml
+  when: install_cert_manager | default(true) | bool
+
+- name: Deploy Rancher using Helm and configure LoadBalancer
+  ansible.builtin.import_tasks: install.yml
+
+- name: Install Rancher KubeVirt Dashboard Extension
+  ansible.builtin.import_tasks: extension.yml
+  when: install_kubevirt_extension | default(true) | bool
