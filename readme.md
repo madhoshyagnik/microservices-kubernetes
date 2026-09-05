@@ -130,8 +130,8 @@ helm install my-otel-demo open-telemetry/opentelemetry-demo \
 
 Once running, you can expose the frontend via LoadBalancer:
 ```bash
-kubectl patch svc my-otel-demo-frontendproxy -p '{"spec":{"type":"LoadBalancer"}}'
-kubectl get svc my-otel-demo-frontendproxy -n default
+kubectl patch svc frontend-proxy -p '{"spec":{"type":"LoadBalancer"}}'
+kubectl get svc frontend-proxy -n default
 ```
 Then access it via `http://<EXTERNAL_IP>:8080`.
 
