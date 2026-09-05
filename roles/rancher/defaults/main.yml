@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for rancher
+rancher_namespace: "cattle-system"
+rancher_hostname: "rancher.madhoshyagnik.com"
+rancher_bootstrap_password: "admin"
+rancher_replicas: 1
+rancher_tls: "external"
+cert_manager_namespace: "cert-manager"
+install_cert_manager: true
+install_kubevirt_extension: true
+kubevirt_extension_version: "303.0.2+up1.3.2"
+kubevirt_extension_namespace: "cattle-ui-plugin-system"

@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Install cert-manager using Helm
+
+- name: Add Jetstack Helm repository
+  ansible.builtin.command: >
+    helm repo add jetstack https://charts.jetstack.io
+  changed_when: false
+
+- name: Update Helm repositories
+  ansible.builtin.command: helm repo update
+  changed_when: false
+
+- name: Install cert-manager
+  ansible.builtin.command: >
+    helm upgrade --install cert-manager jetstack/cert-manager
+    --namespace {{ cert_manager_namespace }}
+    --create-namespace
+    --set crds.enabled=true
+    --wait
+    --atomic
+
+- name: Wait for cert-manager rollout
+  ansible.builtin.command: >
+    kubectl rollout status deployment/cert-manager
+    --namespace {{ cert_manager_namespace }}
+    --timeout=120s
+  register: cert_manager_rollout
+  retries: 3
+  delay: 5
+  until: cert_manager_rollout.rc == 0
+  changed_when: false
